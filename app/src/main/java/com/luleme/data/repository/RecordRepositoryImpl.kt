@@ -5,7 +5,9 @@ import com.luleme.data.local.dao.RecordDao
 import com.luleme.data.local.entity.RecordEntity
 import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -23,18 +25,42 @@ class RecordRepositoryImpl @Inject constructor(
         return dao.getRecordsBetween(startDate, endDate).map { it.toDomain() }
     }
 
-    override suspend fun addRecord(note: String?) {
-        val today = LocalDate.now()
-        val dateString = today.format(DateTimeFormatter.ISO_DATE)
-        
+    override suspend fun getRecordsByDate(date: String): List<Record> {
+        return dao.getRecordsByDate(date).map { it.toDomain() }
+    }
+
+    override suspend fun getDailyCountsBetween(startDate: String, endDate: String): Map<String, Int> {
+        return dao.getDailyCountsBetween(startDate, endDate).associate { it.date to it.count }
+    }
+
+    override suspend fun addRecord(note: String?): Long {
+        return addRecord(System.currentTimeMillis(), note)
+    }
+
+    override suspend fun addRecord(timestamp: Long, note: String?): Long {
+        val dateString = timestamp.toDateString()
         val encryptedNote = note?.let { encryptionManager.encryptData(it) }
-        
+
         val entity = RecordEntity(
-            timestamp = System.currentTimeMillis(),
+            timestamp = timestamp,
             date = dateString,
             note = encryptedNote
         )
-        dao.insertRecord(entity)
+        return dao.insertRecord(entity)
+    }
+
+    override suspend fun updateRecord(record: Record) {
+        val encryptedNote = record.note?.let { encryptionManager.encryptData(it) }
+        dao.updateRecord(
+            id = record.id,
+            timestamp = record.timestamp,
+            date = record.timestamp.toDateString(),
+            note = encryptedNote
+        )
+    }
+
+    override suspend fun deleteRecord(id: Long) {
+        dao.deleteRecord(id)
     }
 
     override suspend fun clearAll() {
@@ -66,5 +92,12 @@ class RecordRepositoryImpl @Inject constructor(
             date = this.date,
             note = decryptedNote
         )
+    }
+
+    private fun Long.toDateString(): String {
+        return Instant.ofEpochMilli(this)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .format(DateTimeFormatter.ISO_DATE)
     }
 }
