@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.lock
+package com.luleme.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,30 +10,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class LockUiState(
-    val isLoading: Boolean = true,
-    val lockEnabled: Boolean = false
-)
-
 @HiltViewModel
-class LockViewModel @Inject constructor(
+class AppRootViewModel @Inject constructor(
     private val userSettingsRepository: UserSettingsRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LockUiState())
-    val uiState: StateFlow<LockUiState> = _uiState.asStateFlow()
+    private val _entryState = MutableStateFlow<AppEntryState>(AppEntryState.Loading)
+    val entryState: StateFlow<AppEntryState> = _entryState.asStateFlow()
 
     init {
-        loadSettings()
-    }
-
-    private fun loadSettings() {
         viewModelScope.launch {
             val settings = userSettingsRepository.getSettings()
-            _uiState.value = LockUiState(
-                isLoading = false,
-                lockEnabled = settings?.lockEnabled ?: false
-            )
+            _entryState.value = if (settings?.lockEnabled == true) {
+                AppEntryState.Locked
+            } else {
+                AppEntryState.Home
+            }
         }
     }
 }

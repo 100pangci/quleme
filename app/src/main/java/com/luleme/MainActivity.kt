@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
-import com.luleme.ui.navigation.NavGraph
+import com.luleme.ui.AppRoot
 import com.luleme.ui.theme.LulemeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -15,7 +15,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             LulemeTheme {
-                NavGraph()
+                AppRoot()
             }
         }
     }

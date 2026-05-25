@@ -25,7 +25,7 @@ import com.luleme.ui.screens.settings.SettingsScreen
 import com.luleme.ui.screens.statistics.StatisticsScreen
 
 @Composable
-fun NavGraph(startDestination: String = Screen.Lock.route) {
+fun NavGraph(startDestination: String = Screen.Home.route) {
     val navController = rememberNavController()
 
     val items = listOf(

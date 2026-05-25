@@ -3,7 +3,7 @@
 帮助机长起飞的健康记录安卓APP。
 
 ## 功能特点
-- 隐私安全：数据完全本地存储，无网络上传。
+- 隐私安全：数据完全本地存储，无网络上传，支持应用锁。
 - 快捷记录：一键记录每日状态，支持撤销与补录。
 - 数据统计：提供周视图和月度热力图，直观展示频率趋势。
 - 健康建议：根据年龄和频率提供个性化健康提醒。
@@ -23,3 +23,7 @@
 <img src=".github/demo/2.jpg" alt="demo2" width="200">
 <img src=".github/demo/3.jpg" alt="demo3" width="200">
 </div>
+
+
+## Star 趋势
+[![Star 趋势](https://starchart.cc/sky22333/luleme.svg?variant=adaptive)](https://starchart.cc/sky22333/luleme)

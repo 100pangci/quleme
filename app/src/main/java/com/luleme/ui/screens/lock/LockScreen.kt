@@ -15,15 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,16 +32,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.luleme.ui.auth.SystemAuth
 import com.luleme.ui.theme.CutePink
 
 @Composable
 fun LockScreen(
-    onUnlocked: () -> Unit,
-    viewModel: LockViewModel = hiltViewModel()
+    onUnlocked: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? FragmentActivity
     var authStarted by remember { mutableStateOf(false) }
@@ -86,13 +80,9 @@ fun LockScreen(
         prompt.authenticate(SystemAuth.promptInfo(context))
     }
 
-    LaunchedEffect(uiState.isLoading, uiState.lockEnabled) {
-        if (!uiState.isLoading) {
-            if (!uiState.lockEnabled) {
-                onUnlocked()
-            } else if (!authStarted) {
-                showSystemAuthPrompt()
-            }
+    LaunchedEffect(Unit) {
+        if (!authStarted) {
+            showSystemAuthPrompt()
         }
     }
 
@@ -103,52 +93,48 @@ fun LockScreen(
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Lock,
+                contentDescription = null,
+                tint = CutePink,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "欢迎回来",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = {
+                    canUseSystemAuth = true
+                    showSystemAuthPrompt()
+                },
+                enabled = canUseSystemAuth
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Lock,
-                    contentDescription = null,
-                    tint = CutePink,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "欢迎回来",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("重新验证")
+            }
+            if (!canUseSystemAuth) {
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(
+                TextButton(
                     onClick = {
-                        canUseSystemAuth = true
-                        showSystemAuthPrompt()
-                    },
-                    enabled = canUseSystemAuth
-                ) {
-                    Text("重新验证")
-                }
-                if (!canUseSystemAuth) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextButton(
-                        onClick = {
-                            context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
-                        }
-                    ) {
-                        Text("前往系统设置")
+                        context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
                     }
+                ) {
+                    Text("前往系统设置")
                 }
             }
         }
