@@ -24,7 +24,6 @@ object DatabaseModule {
             AppDatabase::class.java,
             "luleme_db"
         )
-        .fallbackToDestructiveMigration() // Allow schema changes
         .build()
     }
 

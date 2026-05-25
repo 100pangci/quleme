@@ -7,7 +7,7 @@ import com.luleme.data.local.dao.UserSettingsDao
 import com.luleme.data.local.entity.RecordEntity
 import com.luleme.data.local.entity.UserSettingsEntity
 
-@Database(entities = [RecordEntity::class, UserSettingsEntity::class], version = 1, exportSchema = false)
+@Database(entities = [RecordEntity::class, UserSettingsEntity::class], version = 1, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun recordDao(): RecordDao
     abstract fun userSettingsDao(): UserSettingsDao

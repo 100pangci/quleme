@@ -1,12 +1,13 @@
 package com.luleme.ui.screens.settings
 
+import android.content.Intent
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +22,6 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Password
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -33,7 +33,6 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,18 +45,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.luleme.BuildConfig
 import com.luleme.ui.components.CuteSwitch
 import com.luleme.ui.components.SettingGroup
 import com.luleme.ui.components.SettingItem
-import com.luleme.ui.components.pin.NumPad
-import com.luleme.ui.components.pin.PinDots
+import com.luleme.ui.auth.SystemAuth
 import com.luleme.ui.theme.CutePink
 import com.luleme.ui.theme.SecondaryLight
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -70,11 +65,17 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     
     var showClearDialog by remember { mutableStateOf(false) }
-    
-    // Pin Dialog States
-    var showSetPinDialog by remember { mutableStateOf(false) }
-    var showVerifyPinDialog by remember { mutableStateOf(false) }
-    var verifyAction by remember { mutableStateOf<(() -> Unit)?>(null) } 
+
+    fun toggleSystemLock(enabled: Boolean) {
+        if (enabled) {
+            if (!SystemAuth.canAuthenticate(context)) {
+                Toast.makeText(context, "请先在系统设置中启用锁屏密码或生物识别", Toast.LENGTH_SHORT).show()
+                context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                return
+            }
+        }
+        viewModel.toggleLock(enabled)
+    }
 
     // Export/Import Launchers
     val exportLauncher = rememberLauncherForActivityResult(
@@ -82,11 +83,15 @@ fun SettingsScreen(
     ) { uri ->
         uri?.let {
             scope.launch {
-                val json = viewModel.getAllRecordsJson()
-                context.contentResolver.openOutputStream(it)?.use { stream ->
-                    stream.write(json.toByteArray(Charsets.UTF_8))
+                try {
+                    val json = viewModel.getAllRecordsJson()
+                    context.contentResolver.openOutputStream(it)?.use { stream ->
+                        stream.write(json.toByteArray(Charsets.UTF_8))
+                    } ?: throw IllegalStateException("Unable to open backup file")
+                    Toast.makeText(context, "数据导出成功 ✨", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "导出失败了 😣", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context, "数据导出成功 ✨", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -132,32 +137,6 @@ fun SettingsScreen(
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp)
-        )
-    }
-
-    if (showSetPinDialog) {
-        PinSetupDialog(
-            onPinSet = { pin ->
-                viewModel.setPin(pin)
-                showSetPinDialog = false
-                Toast.makeText(context, "密码设置成功 🔒", Toast.LENGTH_SHORT).show()
-            },
-            onDismiss = { showSetPinDialog = false }
-        )
-    }
-
-    if (showVerifyPinDialog) {
-        PinVerifyDialog(
-            onVerify = { pin ->
-                if (viewModel.verifyPin(pin)) {
-                    showVerifyPinDialog = false
-                    verifyAction?.invoke()
-                    true
-                } else {
-                    false 
-                }
-            },
-            onDismiss = { showVerifyPinDialog = false }
         )
     }
 
@@ -214,40 +193,16 @@ fun SettingsScreen(
                 SettingItem(
                     icon = Icons.Rounded.Lock,
                     title = "应用锁",
-                    subtitle = "保护你的隐私记录",
+                    subtitle = "使用系统锁屏密码或生物识别",
                     iconTint = CutePink,
                     trailingContent = {
                         CuteSwitch(
                             checked = uiState.lockEnabled,
-                            onCheckedChange = { 
-                                if (it) {
-                                    if (uiState.hasPin) {
-                                        verifyAction = { viewModel.toggleLock(true) }
-                                        showVerifyPinDialog = true
-                                    } else {
-                                        showSetPinDialog = true
-                                    }
-                                } else {
-                                    verifyAction = { viewModel.toggleLock(false) }
-                                    showVerifyPinDialog = true
-                                }
-                            }
+                            onCheckedChange = { toggleSystemLock(it) }
                         )
                     },
-                    onClick = { /* Toggle logic handled by switch, but could also be here */ }
+                    onClick = { toggleSystemLock(!uiState.lockEnabled) }
                 )
-                
-                if (uiState.lockEnabled) {
-                    SettingItem(
-                        icon = Icons.Rounded.Password,
-                        title = "修改密码",
-                        iconTint = MaterialTheme.colorScheme.secondary,
-                        onClick = {
-                            verifyAction = { showSetPinDialog = true }
-                            showVerifyPinDialog = true
-                        }
-                    )
-                }
             }
         }
 
@@ -290,129 +245,6 @@ fun SettingsScreen(
                     .clickable { uriHandler.openUri("https://github.com/sky22333/luleme") },
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-        }
-    }
-}
-
-@Composable
-fun PinVerifyDialog(
-    onVerify: (String) -> Boolean,
-    onDismiss: () -> Unit
-) {
-    var pin by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
-
-    LaunchedEffect(pin) {
-        if (pin.length == 4) {
-            delay(100)
-            if (onVerify(pin)) {
-                // Success handled by parent
-            } else {
-                error = "密码不对哦"
-                pin = ""
-                delay(1000)
-                error = ""
-            }
-        }
-    }
-
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(24.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text("验证密码 🔒", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    if (error.isNotEmpty()) error else "请输入当前密码",
-                    color = if (error.isNotEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                PinDots(length = 4, inputLength = pin.length)
-                Spacer(modifier = Modifier.weight(1f))
-                NumPad(
-                    onNumberClick = { if (pin.length < 4) pin += it },
-                    onDeleteClick = { if (pin.isNotEmpty()) pin = pin.dropLast(1) }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = onDismiss) { Text("取消") }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun PinSetupDialog(
-    onPinSet: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var step by remember { mutableStateOf(1) }
-    var firstPin by remember { mutableStateOf("") }
-    var pin by remember { mutableStateOf("") }
-    var title by remember { mutableStateOf("设置新密码") }
-    var error by remember { mutableStateOf("") }
-
-    LaunchedEffect(pin) {
-        if (pin.length == 4) {
-            delay(100)
-            if (step == 1) {
-                firstPin = pin
-                pin = ""
-                step = 2
-                title = "请再次输入"
-            } else {
-                if (pin == firstPin) {
-                    onPinSet(pin)
-                } else {
-                    error = "两次不一样哦"
-                    pin = ""
-                    firstPin = ""
-                    step = 1
-                    title = "设置新密码"
-                    delay(1000)
-                    error = ""
-                }
-            }
-        }
-    }
-
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(24.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(title, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    if (error.isNotEmpty()) error else if (step == 1) "设置一个4位数字密码" else "确认密码",
-                    color = if (error.isNotEmpty()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                PinDots(length = 4, inputLength = pin.length)
-                Spacer(modifier = Modifier.weight(1f))
-                NumPad(
-                    onNumberClick = { if (pin.length < 4) pin += it },
-                    onDeleteClick = { if (pin.isNotEmpty()) pin = pin.dropLast(1) }
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                TextButton(onClick = onDismiss) { Text("取消") }
-                Spacer(modifier = Modifier.height(16.dp))
-            }
         }
     }
 }

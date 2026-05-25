@@ -17,14 +17,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
 import java.io.StringReader
 import javax.inject.Inject
 
 data class SettingsUiState(
     val age: Int = 25,
-    val lockEnabled: Boolean = false,
-    val hasPin: Boolean = false
+    val lockEnabled: Boolean = false
 )
 
 @HiltViewModel
@@ -37,8 +35,6 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private var currentPinHash: String? = null
-
     init {
         loadSettings()
     }
@@ -47,17 +43,15 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val settings = userSettingsRepository.getSettings()
             if (settings != null) {
-                currentPinHash = settings.pinHash
                 _uiState.value = SettingsUiState(
                     age = settings.age,
-                    lockEnabled = settings.lockEnabled,
-                    hasPin = settings.pinHash != null
+                    lockEnabled = settings.lockEnabled
                 )
             } else {
                 // Initialize default settings
                 val default = UserSettings(25, false, null)
                 userSettingsRepository.saveSettings(default)
-                _uiState.value = SettingsUiState(25, false, false)
+                _uiState.value = SettingsUiState(25, false)
             }
         }
     }
@@ -65,55 +59,26 @@ class SettingsViewModel @Inject constructor(
     fun updateAge(age: Int) {
         viewModelScope.launch {
             val current = _uiState.value
-            saveSettings(current.copy(age = age), currentPinHash)
+            saveSettings(current.copy(age = age))
         }
     }
 
     fun toggleLock(enabled: Boolean) {
         viewModelScope.launch {
             val current = _uiState.value
-            // Only allow enabling if PIN is set
-            if (enabled && currentPinHash == null) {
-                // Should not happen if UI is correct, but just in case
-                return@launch
-            }
-            saveSettings(current.copy(lockEnabled = enabled), currentPinHash)
+            saveSettings(current.copy(lockEnabled = enabled))
         }
     }
 
-    fun setPin(pin: String) {
-        viewModelScope.launch {
-            val hash = hashPin(pin)
-            currentPinHash = hash
-            val current = _uiState.value
-            // Auto enable lock when PIN is set for the first time
-            val newLockState = true
-            saveSettings(current.copy(lockEnabled = newLockState), hash)
-        }
-    }
-    
-    fun verifyPin(pin: String): Boolean {
-        if (currentPinHash == null) return true // No PIN set
-        return hashPin(pin) == currentPinHash
-    }
-
-    private suspend fun saveSettings(state: SettingsUiState, pinHash: String?) {
+    private suspend fun saveSettings(state: SettingsUiState) {
         userSettingsRepository.saveSettings(
             UserSettings(
                 age = state.age,
                 lockEnabled = state.lockEnabled,
-                pinHash = pinHash
+                pinHash = null
             )
         )
-        _uiState.value = state.copy(hasPin = pinHash != null)
-        currentPinHash = pinHash
-    }
-    
-    private fun hashPin(pin: String): String {
-        val bytes = pin.toByteArray()
-        val md = MessageDigest.getInstance("SHA-256")
-        val digest = md.digest(bytes)
-        return digest.fold("") { str, it -> str + "%02x".format(it) }
+        _uiState.value = state
     }
 
     fun clearAllData() {

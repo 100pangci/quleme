@@ -23,6 +23,11 @@ val versionNameFromFile = rootProject.file("VERSION")
 
 val versionCodeFromFile = computeVersionCode(versionNameFromFile)
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.incremental", "true")
+}
+
 android {
     namespace = "com.luleme"
     compileSdk = 34
@@ -103,6 +108,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.biometric)
     
     // Hilt
     implementation(libs.hilt.android)

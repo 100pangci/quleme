@@ -1,10 +1,8 @@
 package com.luleme.data.encryption
 
-import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -14,9 +12,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class EncryptionManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
+class EncryptionManager @Inject constructor() {
     private val keyAlias = "luleme_master_key"
     private val androidKeyStore = "AndroidKeyStore"
     private val transformation = "AES/GCM/NoPadding"
@@ -45,20 +41,22 @@ class EncryptionManager @Inject constructor(
             // Return Base64(IV + Encrypted)
             // IV is typically 12 bytes for GCM
             val combined = iv + encrypted
-            return Base64.encodeToString(combined, Base64.DEFAULT)
+            return Base64.encodeToString(combined, Base64.NO_WRAP)
         } catch (e: Exception) {
-            e.printStackTrace()
-            return plainText // Fallback or handle error
+            throw EncryptionException("Failed to encrypt data", e)
         }
     }
 
     fun decryptData(encryptedText: String): String {
         try {
             val decoded = Base64.decode(encryptedText, Base64.DEFAULT)
+            if (decoded.size <= GCM_IV_LENGTH_BYTES) {
+                throw IllegalArgumentException("Encrypted payload is too short")
+            }
             
             // Extract IV (first 12 bytes)
-            val iv = decoded.copyOfRange(0, 12)
-            val encrypted = decoded.copyOfRange(12, decoded.size)
+            val iv = decoded.copyOfRange(0, GCM_IV_LENGTH_BYTES)
+            val encrypted = decoded.copyOfRange(GCM_IV_LENGTH_BYTES, decoded.size)
 
             val keyStore = KeyStore.getInstance(androidKeyStore).apply { load(null) }
             val key = keyStore.getKey(keyAlias, null) as SecretKey
@@ -69,8 +67,7 @@ class EncryptionManager @Inject constructor(
             val decrypted = cipher.doFinal(encrypted)
             return String(decrypted, Charsets.UTF_8)
         } catch (e: Exception) {
-            e.printStackTrace()
-            return "" // Handle error
+            throw DecryptionException("Failed to decrypt data", e)
         }
     }
 
@@ -92,5 +89,12 @@ class EncryptionManager @Inject constructor(
         )
 
         keyGenerator.generateKey()
+    }
+
+    class EncryptionException(message: String, cause: Throwable) : IllegalStateException(message, cause)
+    class DecryptionException(message: String, cause: Throwable) : IllegalStateException(message, cause)
+
+    private companion object {
+        const val GCM_IV_LENGTH_BYTES = 12
     }
 }

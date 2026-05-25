@@ -8,19 +8,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
 import javax.inject.Inject
+
+data class LockUiState(
+    val isLoading: Boolean = true,
+    val lockEnabled: Boolean = false
+)
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
     private val userSettingsRepository: UserSettingsRepository
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private var pinHash: String? = null
-    private var isLockEnabled: Boolean = false
+    private val _uiState = MutableStateFlow(LockUiState())
+    val uiState: StateFlow<LockUiState> = _uiState.asStateFlow()
 
     init {
         loadSettings()
@@ -29,21 +30,10 @@ class LockViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             val settings = userSettingsRepository.getSettings()
-            pinHash = settings?.pinHash
-            isLockEnabled = settings?.lockEnabled ?: false
-            _isLoading.value = false
+            _uiState.value = LockUiState(
+                isLoading = false,
+                lockEnabled = settings?.lockEnabled ?: false
+            )
         }
-    }
-
-    fun verifyPin(pin: String): Boolean {
-        if (!isLockEnabled || pinHash == null) return true
-        return hashPin(pin) == pinHash
-    }
-
-    private fun hashPin(pin: String): String {
-        val bytes = pin.toByteArray()
-        val md = MessageDigest.getInstance("SHA-256")
-        val digest = md.digest(bytes)
-        return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 }
