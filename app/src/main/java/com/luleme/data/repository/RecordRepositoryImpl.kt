@@ -5,6 +5,10 @@ import com.luleme.data.local.dao.RecordDao
 import com.luleme.data.local.entity.RecordEntity
 import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -32,6 +36,34 @@ class RecordRepositoryImpl @Inject constructor(
 
     override suspend fun getDailyCountsBetween(startDate: String, endDate: String): Map<String, Int> {
         return dao.getDailyCountsBetween(startDate, endDate).associate { it.date to it.count }
+    }
+
+    override fun observeRecordsBetween(startDate: String, endDate: String): Flow<List<Record>> {
+        return dao.observeRecordsBetween(startDate, endDate)
+            .map { records -> records.map { it.toDomain() } }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun observeRecordsByDate(date: String): Flow<List<Record>> {
+        return dao.observeRecordsByDate(date)
+            .map { records -> records.map { it.toDomain() } }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun observeDailyCountsBetween(startDate: String, endDate: String): Flow<Map<String, Int>> {
+        return dao.observeDailyCountsBetween(startDate, endDate)
+            .map { counts -> counts.associate { it.date to it.count } }
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun observeTotalCount(): Flow<Int> {
+        return dao.observeTotalCount()
+            .flowOn(Dispatchers.IO)
+    }
+
+    override fun observeRecordDates(): Flow<List<String>> {
+        return dao.observeRecordDates()
+            .flowOn(Dispatchers.IO)
     }
 
     override suspend fun addRecord(note: String?): Long {

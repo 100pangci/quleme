@@ -6,6 +6,7 @@ import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
 import com.luleme.domain.repository.UserSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,35 +37,34 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        loadData()
+        observeData()
     }
 
-    fun loadData(showLoading: Boolean = true) {
+    private fun observeData() {
         viewModelScope.launch {
-            if (showLoading) {
-                _uiState.value = HomeUiState.Loading
-            }
             try {
-                val todayRecords = recordRepository.getTodayRecords()
-                
-                // Get this week's records
                 val today = LocalDate.now()
+                val todayString = today.format(DateTimeFormatter.ISO_DATE)
                 val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-                
-                val weekRecords = recordRepository.getRecordsBetween(
-                    startOfWeek.format(DateTimeFormatter.ISO_DATE),
-                    endOfWeek.format(DateTimeFormatter.ISO_DATE)
-                )
-                
                 val settings = userSettingsRepository.getSettings()
                 val age = settings?.age ?: 25 // Default age
 
-                _uiState.value = HomeUiState.Success(
-                    todayRecords = todayRecords,
-                    weekCount = weekRecords.size,
-                    age = age
-                )
+                combine(
+                    recordRepository.observeRecordsBetween(todayString, todayString),
+                    recordRepository.observeRecordsBetween(
+                        startOfWeek.format(DateTimeFormatter.ISO_DATE),
+                        endOfWeek.format(DateTimeFormatter.ISO_DATE)
+                    )
+                ) { todayRecords, weekRecords ->
+                    HomeUiState.Success(
+                        todayRecords = todayRecords,
+                        weekCount = weekRecords.size,
+                        age = age
+                    )
+                }.collect { state ->
+                    _uiState.value = state
+                }
             } catch (e: Exception) {
                 // If we are already showing data (Success), don't replace it with an error screen on refresh failure.
                 // Only show Error state if we have nothing to show.
@@ -83,7 +83,6 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 recordRepository.addRecord()
-                loadData(showLoading = false)
             } catch (e: Exception) {
                 // Handle error
             }

@@ -5,6 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,131 +40,136 @@ class StatisticsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(StatisticsUiState(loading = true))
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
+    private val visibleMonth = MutableStateFlow(LocalDate.now().withDayOfMonth(1))
+    private val selectedDate = MutableStateFlow<LocalDate?>(null)
 
     init {
-        loadData()
+        observeData()
     }
 
-    fun loadData(month: LocalDate = _uiState.value.visibleMonth) {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeData() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(loading = true)
-            
-            val allRecords = recordRepository.getAllRecords()
             val today = LocalDate.now()
-
-            // Week Data
             val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-            val weekCounts = recordRepository.getDailyCountsBetween(
+            val weekCountsFlow = recordRepository.observeDailyCountsBetween(
                 startOfWeek.format(DateTimeFormatter.ISO_DATE),
                 endOfWeek.format(DateTimeFormatter.ISO_DATE)
             )
-            val weekData = mutableMapOf<DayOfWeek, Int>()
-            for (i in 0..6) {
-                val date = startOfWeek.plusDays(i.toLong())
-                weekData[date.dayOfWeek] = weekCounts[date.format(DateTimeFormatter.ISO_DATE)] ?: 0
+
+            val monthCountsFlow = visibleMonth.flatMapLatest { month ->
+                val monthStart = month.withDayOfMonth(1)
+                val monthEnd = monthStart.with(TemporalAdjusters.lastDayOfMonth())
+                recordRepository.observeDailyCountsBetween(
+                    monthStart.format(DateTimeFormatter.ISO_DATE),
+                    monthEnd.format(DateTimeFormatter.ISO_DATE)
+                ).map { counts -> monthStart to counts }
             }
 
-            // Month Data
-            val visibleMonth = month.withDayOfMonth(1)
-            val startOfMonth = visibleMonth.with(TemporalAdjusters.firstDayOfMonth())
-            val endOfMonth = visibleMonth.with(TemporalAdjusters.lastDayOfMonth())
-            val monthCounts = recordRepository.getDailyCountsBetween(
-                startOfMonth.format(DateTimeFormatter.ISO_DATE),
-                endOfMonth.format(DateTimeFormatter.ISO_DATE)
-            )
-            val monthData = mutableMapOf<LocalDate, Int>()
-            for (i in 0 until visibleMonth.lengthOfMonth()) {
-                val date = startOfMonth.plusDays(i.toLong())
-                monthData[date] = monthCounts[date.format(DateTimeFormatter.ISO_DATE)] ?: 0
+            val selectedRecordsFlow = selectedDate.flatMapLatest { date ->
+                if (date == null) {
+                    flowOf<Pair<LocalDate?, List<Record>>>(null to emptyList())
+                } else {
+                    recordRepository.observeRecordsByDate(date.format(DateTimeFormatter.ISO_DATE))
+                        .map { records -> date to records }
+                }
             }
 
-            // All Time Stats
-            val totalCount = allRecords.size
-            val maxStreak = calculateMaxStreak(allRecords)
-            
-            val firstRecord = allRecords.minByOrNull { it.timestamp }
-            val average = if (firstRecord != null) {
-                val days = ChronoUnit.DAYS.between(LocalDate.parse(firstRecord.date), today) + 1
-                val weeks = kotlin.math.ceil(days / 7.0).toFloat()
-                totalCount.toFloat() / weeks
-            } else {
-                0f
+            try {
+                combine(
+                    recordRepository.observeTotalCount(),
+                    recordRepository.observeRecordDates(),
+                    weekCountsFlow,
+                    monthCountsFlow,
+                    selectedRecordsFlow
+                ) { totalCount, recordDates, weekCounts, monthPair, selectedPair ->
+                    val (month, monthCounts) = monthPair
+                    val (selected, selectedRecords) = selectedPair
+                    StatisticsUiState(
+                        weekData = buildWeekData(startOfWeek, weekCounts),
+                        monthData = buildMonthData(month, monthCounts),
+                        visibleMonth = month,
+                        selectedDate = selected,
+                        selectedDateRecords = selectedRecords,
+                        totalCount = totalCount,
+                        maxStreak = calculateMaxStreak(recordDates),
+                        averageFrequency = calculateAverageFrequency(totalCount, recordDates, today),
+                        loading = false
+                    )
+                }.collect { state ->
+                    _uiState.value = state
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _uiState.value = _uiState.value.copy(loading = false)
             }
-
-            val selectedDate = _uiState.value.selectedDate
-            val selectedRecords = selectedDate?.let {
-                recordRepository.getRecordsByDate(it.format(DateTimeFormatter.ISO_DATE))
-            }.orEmpty()
-
-            _uiState.value = StatisticsUiState(
-                weekData = weekData,
-                monthData = monthData,
-                visibleMonth = visibleMonth,
-                selectedDate = selectedDate,
-                selectedDateRecords = selectedRecords,
-                totalCount = totalCount,
-                maxStreak = maxStreak,
-                averageFrequency = average,
-                loading = false
-            )
         }
     }
 
     fun showPreviousMonth() {
-        loadData(_uiState.value.visibleMonth.minusMonths(1))
+        visibleMonth.value = visibleMonth.value.minusMonths(1)
     }
 
     fun showNextMonth() {
-        loadData(_uiState.value.visibleMonth.plusMonths(1))
+        visibleMonth.value = visibleMonth.value.plusMonths(1)
     }
 
     fun showCurrentMonth() {
-        loadData(LocalDate.now())
+        visibleMonth.value = LocalDate.now().withDayOfMonth(1)
     }
 
     fun selectDate(date: LocalDate) {
-        viewModelScope.launch {
-            val records = recordRepository.getRecordsByDate(date.format(DateTimeFormatter.ISO_DATE))
-            _uiState.value = _uiState.value.copy(
-                selectedDate = date,
-                selectedDateRecords = records
-            )
-        }
+        selectedDate.value = date
     }
 
     fun clearSelectedDate() {
-        _uiState.value = _uiState.value.copy(
-            selectedDate = null,
-            selectedDateRecords = emptyList()
-        )
+        selectedDate.value = null
     }
 
     fun addRecord(timestamp: Long, note: String?) {
         viewModelScope.launch {
             recordRepository.addRecord(timestamp, note)
-            loadData()
         }
     }
 
     fun updateRecord(record: Record) {
         viewModelScope.launch {
             recordRepository.updateRecord(record)
-            loadData()
         }
     }
 
     fun deleteRecord(id: Long) {
         viewModelScope.launch {
             recordRepository.deleteRecord(id)
-            loadData()
         }
     }
 
-    private fun calculateMaxStreak(records: List<Record>): Int {
-        if (records.isEmpty()) return 0
+    private fun buildWeekData(startOfWeek: LocalDate, counts: Map<String, Int>): Map<DayOfWeek, Int> {
+        return (0..6).associate { offset ->
+            val date = startOfWeek.plusDays(offset.toLong())
+            date.dayOfWeek to (counts[date.format(DateTimeFormatter.ISO_DATE)] ?: 0)
+        }
+    }
+
+    private fun buildMonthData(month: LocalDate, counts: Map<String, Int>): Map<LocalDate, Int> {
+        return (0 until month.lengthOfMonth()).associate { offset ->
+            val date = month.plusDays(offset.toLong())
+            date to (counts[date.format(DateTimeFormatter.ISO_DATE)] ?: 0)
+        }
+    }
+
+    private fun calculateAverageFrequency(totalCount: Int, dates: List<String>, today: LocalDate): Float {
+        val firstRecord = dates.firstOrNull() ?: return 0f
+        val days = ChronoUnit.DAYS.between(LocalDate.parse(firstRecord), today) + 1
+        val weeks = kotlin.math.ceil(days / 7.0).toFloat()
+        return totalCount.toFloat() / weeks
+    }
+
+    private fun calculateMaxStreak(dates: List<String>): Int {
+        if (dates.isEmpty()) return 0
         
-        val sortedDates = records.map { LocalDate.parse(it.date) }.distinct().sorted()
+        val sortedDates = dates.map { LocalDate.parse(it) }.distinct().sorted()
         var maxStreak = 0
         var currentStreak = 0
         
