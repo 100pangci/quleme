@@ -1,18 +1,15 @@
 package com.luleme.ui.screens.home
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FlightTakeoff
+import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Button
@@ -39,21 +37,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luleme.ui.components.CuteCard
@@ -65,7 +62,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -203,98 +199,154 @@ fun TakeoffButton(
 ) {
     val scope = rememberCoroutineScope()
     var isTakingOff by remember { mutableStateOf(false) }
-    // Using a counter to trigger AnimatedContent even if state is same
-    var animationTrigger by remember { mutableIntStateOf(0) }
+    var animatingHasRecordedToday by remember { mutableStateOf(hasRecordedToday) }
+    val takeoffProgress = remember { Animatable(0f) }
 
     val scale by animateFloatAsState(
-        targetValue = if (isTakingOff) 0.85f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessLow
-        ),
+        targetValue = if (isTakingOff) 1.04f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "button_scale"
     )
 
     val handleTakeoff = {
         if (!isTakingOff) {
             isTakingOff = true
-            animationTrigger++
+            animatingHasRecordedToday = hasRecordedToday
+            onTakeoff()
             
             scope.launch {
-                // 1. Play the "Takeoff" animation first
-                // Wait for the icon to fly up and fade out (approx 300-400ms visual)
-                delay(350) 
-                
-                // 2. Commit the record
-                // This will trigger a recomposition and likely switch the button style
-                onTakeoff()
-                
-                // 3. Reset animation state
-                // Allow a small buffer for the UI to settle
-                delay(150)
+                takeoffProgress.snapTo(0f)
+                takeoffProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = keyframes {
+                        durationMillis = 720
+                        0f at 0 using FastOutSlowInEasing
+                        0.18f at 90 using FastOutSlowInEasing
+                        1f at 720 using FastOutSlowInEasing
+                    }
+                )
+                takeoffProgress.snapTo(0f)
                 isTakingOff = false
+                animatingHasRecordedToday = hasRecordedToday
             }
         }
     }
 
-    if (!hasRecordedToday) {
-        ExtendedFloatingActionButton(
-            onClick = { handleTakeoff() },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            modifier = Modifier
-                .height(64.dp)
-                .padding(horizontal = 32.dp)
-                .scale(scale),
-            shape = MaterialTheme.shapes.extraLarge,
-            elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(
-                defaultElevation = 6.dp,
-                pressedElevation = 2.dp
-            )
-        ) {
-            AnimatedContent(
-                targetState = animationTrigger,
-                transitionSpec = {
-                    // Fly up animation: New icon comes from bottom, Old icon goes to top
-                    (slideInVertically { height -> height } + fadeIn()) togetherWith
-                    (slideOutVertically { height -> -height } + fadeOut())
-                },
-                label = "icon_anim"
-            ) { 
-                Icon(Icons.Rounded.FlightTakeoff, contentDescription = null)
+    val showRecordedStyle = if (isTakingOff) animatingHasRecordedToday else hasRecordedToday
+
+    if (!showRecordedStyle) {
+        Box(contentAlignment = Alignment.Center) {
+            TakeoffPulse(progress = takeoffProgress.value)
+            ExtendedFloatingActionButton(
+                onClick = { handleTakeoff() },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .height(64.dp)
+                    .padding(horizontal = 32.dp)
+                    .scale(scale),
+                shape = MaterialTheme.shapes.extraLarge,
+                elevation = androidx.compose.material3.FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 6.dp,
+                    pressedElevation = 2.dp
+                )
+            ) {
+                TakeoffIcon(progress = takeoffProgress.value)
+                Spacer(modifier = Modifier.size(12.dp))
+                Text(
+                    "起飞",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
             }
-            Spacer(modifier = Modifier.size(12.dp))
-            Text(
-                "起飞",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-            )
         }
     } else {
-        Button(
-            onClick = { handleTakeoff() },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.primary
-            ),
-            elevation = ButtonDefaults.buttonElevation(0.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            modifier = Modifier
-                .height(48.dp)
-                .scale(scale)
-        ) {
-            AnimatedContent(
-                targetState = animationTrigger,
-                transitionSpec = {
-                    (slideInVertically { height -> height } + fadeIn()) togetherWith
-                    (slideOutVertically { height -> -height } + fadeOut())
-                },
-                label = "icon_anim_small"
+        Box(contentAlignment = Alignment.Center) {
+            TakeoffPulse(progress = takeoffProgress.value)
+            Button(
+                onClick = { handleTakeoff() },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = ButtonDefaults.buttonElevation(0.dp),
+                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier
+                    .height(48.dp)
+                    .scale(scale)
             ) {
-                Icon(Icons.Rounded.FlightTakeoff, contentDescription = null, modifier = Modifier.size(18.dp))
+                TakeoffIcon(progress = takeoffProgress.value, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("再来一发")
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("再来一发")
         }
+    }
+}
+
+@Composable
+private fun BoxScope.TakeoffPulse(progress: Float) {
+    if (progress <= 0f) return
+
+    val primaryAlpha = (1f - progress).coerceIn(0f, 1f)
+    val secondaryProgress = ((progress - 0.18f) / 0.82f).coerceIn(0f, 1f)
+    val secondaryAlpha = (1f - secondaryProgress).coerceIn(0f, 1f)
+
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .scale(1f + progress * 0.34f)
+            .alpha(primaryAlpha * 0.26f)
+            .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraLarge)
+    )
+    Box(
+        modifier = Modifier
+            .matchParentSize()
+            .scale(1f + secondaryProgress * 0.58f)
+            .alpha(secondaryAlpha * 0.16f)
+            .background(MaterialTheme.colorScheme.secondary, MaterialTheme.shapes.extraLarge)
+    )
+}
+
+@Composable
+private fun TakeoffIcon(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    val launchProgress = ((progress - 0.12f) / 0.88f).coerceIn(0f, 1f)
+    val doneProgress = ((progress - 0.68f) / 0.32f).coerceIn(0f, 1f)
+    Box(contentAlignment = Alignment.Center) {
+        Icon(
+            imageVector = Icons.Rounded.FlightTakeoff,
+            contentDescription = null,
+            modifier = modifier
+                .graphicsLayer {
+                    translationX = launchProgress * 42f
+                    translationY = -launchProgress * 36f
+                    rotationZ = -18f * launchProgress
+                    alpha = 1f - launchProgress
+                }
+        )
+        Icon(
+            imageVector = Icons.Rounded.FlightTakeoff,
+            contentDescription = null,
+            modifier = modifier
+                .alpha(if (progress == 0f) 1f else (1f - doneProgress) * progress.coerceIn(0f, 1f))
+                .graphicsLayer {
+                    translationX = -12f * (1f - progress)
+                    translationY = 10f * (1f - progress)
+                    scaleX = 0.82f + progress * 0.18f
+                    scaleY = 0.82f + progress * 0.18f
+                }
+        )
+        Icon(
+            imageVector = Icons.Rounded.Done,
+            contentDescription = null,
+            modifier = modifier
+                .alpha(doneProgress)
+                .graphicsLayer {
+                    scaleX = 0.72f + doneProgress * 0.28f
+                    scaleY = 0.72f + doneProgress * 0.28f
+                }
+        )
     }
 }
 
