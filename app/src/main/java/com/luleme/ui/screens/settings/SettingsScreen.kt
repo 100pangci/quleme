@@ -59,6 +59,7 @@ import com.quleme.ui.text.AppProfile
 import com.quleme.ui.text.AppText
 import com.quleme.ui.theme.CutePink
 import com.quleme.ui.theme.SecondaryLight
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate

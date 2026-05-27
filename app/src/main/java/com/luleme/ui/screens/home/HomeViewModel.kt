@@ -7,13 +7,14 @@ import com.quleme.domain.repository.RecordRepository
 import com.quleme.domain.repository.UserSettingsRepository
 import com.quleme.ui.text.AppText
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
-import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
@@ -41,28 +42,29 @@ class HomeViewModel @Inject constructor(
         observeData()
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeData() {
         viewModelScope.launch {
             try {
-                val today = LocalDate.now()
-                val todayString = today.format(DateTimeFormatter.ISO_DATE)
-                val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-                val settings = userSettingsRepository.getSettings()
-                val age = settings?.age ?: 25 // Default age
+                observeLocalDates().flatMapLatest { today ->
+                    val todayString = today.format(DateTimeFormatter.ISO_DATE)
+                    val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                    val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+                    val age = userSettingsRepository.getSettings()?.age ?: 25
 
-                combine(
-                    recordRepository.observeRecordsBetween(todayString, todayString),
-                    recordRepository.observeRecordsBetween(
-                        startOfWeek.format(DateTimeFormatter.ISO_DATE),
-                        endOfWeek.format(DateTimeFormatter.ISO_DATE)
-                    )
-                ) { todayRecords, weekRecords ->
-                    HomeUiState.Success(
-                        todayRecords = todayRecords,
-                        weekCount = weekRecords.size,
-                        age = age
-                    )
+                    combine(
+                        recordRepository.observeRecordsBetween(todayString, todayString),
+                        recordRepository.observeRecordsBetween(
+                            startOfWeek.format(DateTimeFormatter.ISO_DATE),
+                            endOfWeek.format(DateTimeFormatter.ISO_DATE)
+                        )
+                    ) { todayRecords, weekRecords ->
+                        HomeUiState.Success(
+                            todayRecords = todayRecords,
+                            weekCount = weekRecords.size,
+                            age = age
+                        )
+                    }
                 }.collect { state ->
                     _uiState.value = state
                 }
