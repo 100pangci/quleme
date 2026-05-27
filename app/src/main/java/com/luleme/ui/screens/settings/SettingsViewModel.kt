@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.StringReader
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -31,6 +32,7 @@ import javax.inject.Inject
 data class SettingsUiState(
     val age: Int = 25,
     val lockEnabled: Boolean = false,
+    val birthDate: String = "",
     val webDavUrl: String = "",
     val webDavUsername: String = "",
     val webDavDirectory: String = "",
@@ -60,6 +62,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.value = SettingsUiState(
                     age = settings.age,
                     lockEnabled = settings.lockEnabled,
+                    birthDate = settings.birthDate,
                     webDavUrl = settings.webDavUrl,
                     webDavUsername = settings.webDavUsername,
                     webDavDirectory = settings.webDavDirectory,
@@ -67,17 +70,25 @@ class SettingsViewModel @Inject constructor(
                 )
             } else {
                 // Initialize default settings
-                val default = UserSettings(25, false)
+                val defaultBirthDate = LocalDate.now().minusYears(25).format(DateTimeFormatter.ISO_DATE)
+                val default = UserSettings(age = 25, lockEnabled = false, birthDate = defaultBirthDate)
                 userSettingsRepository.saveSettings(default)
-                _uiState.value = SettingsUiState(25, false)
+                _uiState.value = SettingsUiState(age = 25, lockEnabled = false, birthDate = defaultBirthDate)
             }
         }
     }
 
-    fun updateAge(age: Int) {
+    fun updateBirthDate(birthDate: LocalDate) {
         viewModelScope.launch {
             val current = _uiState.value
-            saveSettings(current.copy(age = age))
+            val today = LocalDate.now()
+            val calculatedAge = java.time.Period.between(birthDate, today).years.coerceIn(0, 120)
+            saveSettings(
+                current.copy(
+                    age = calculatedAge,
+                    birthDate = birthDate.format(DateTimeFormatter.ISO_DATE)
+                )
+            )
         }
     }
 
@@ -93,6 +104,7 @@ class SettingsViewModel @Inject constructor(
             UserSettings(
                 age = state.age,
                 lockEnabled = state.lockEnabled,
+                birthDate = state.birthDate,
                 webDavUrl = state.webDavUrl,
                 webDavUsername = state.webDavUsername,
                 webDavPassword = currentEncryptedWebDavPassword(),
@@ -145,6 +157,7 @@ class SettingsViewModel @Inject constructor(
                 UserSettings(
                     age = state.age,
                     lockEnabled = state.lockEnabled,
+                    birthDate = state.birthDate,
                     webDavUrl = state.webDavUrl,
                     webDavUsername = state.webDavUsername,
                     webDavPassword = encryptedPassword,

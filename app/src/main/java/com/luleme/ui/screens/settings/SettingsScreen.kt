@@ -61,7 +61,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -268,13 +268,21 @@ fun SettingsScreen(
     }
 
     val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
-    var birthDate by remember {
-        mutableStateOf(LocalDate.now().minusYears(uiState.age.toLong()))
+    val persistedBirthDate = remember(uiState.birthDate) {
+        runCatching { LocalDate.parse(uiState.birthDate, DateTimeFormatter.ISO_DATE) }.getOrNull()
+    }
+    var birthDate by remember(uiState.birthDate) {
+        mutableStateOf(
+            persistedBirthDate ?: LocalDate.now().minusYears(uiState.age.toLong())
+        )
+    }
+    val displayAge = remember(birthDate) {
+        Period.between(birthDate, LocalDate.now()).years.coerceIn(0, 120)
     }
 
     if (showBirthDateDialog) {
         val initialMillis = remember(birthDate) {
-            birthDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            birthDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         }
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
@@ -286,12 +294,10 @@ fun SettingsScreen(
                         val selectedMillis = datePickerState.selectedDateMillis
                         if (selectedMillis != null) {
                             val selectedDate = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneOffset.UTC)
                                 .toLocalDate()
                             birthDate = selectedDate
-                            val calculatedAge = Period.between(selectedDate, LocalDate.now()).years
-                                .coerceIn(0, 120)
-                            viewModel.updateAge(calculatedAge)
+                            viewModel.updateBirthDate(selectedDate)
                         }
                         showBirthDateDialog = false
                     }
@@ -362,7 +368,7 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.padding(horizontal = 4.dp))
                         Text(
-                            text = "${uiState.age} 岁",
+                            text = "$displayAge 岁",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.primary
                         )

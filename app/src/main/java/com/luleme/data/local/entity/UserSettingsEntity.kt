@@ -15,6 +15,9 @@ data class UserSettingsEntity(
     @ColumnInfo(name = "lock_enabled")
     val lockEnabled: Boolean = false, // Default false as per request (optional)
 
+    @ColumnInfo(name = "birth_date")
+    val birthDate: String = "",
+
     @ColumnInfo(name = "webdav_url")
     val webDavUrl: String = "",
 
