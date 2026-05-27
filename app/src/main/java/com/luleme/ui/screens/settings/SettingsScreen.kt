@@ -36,7 +36,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +62,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -274,15 +272,9 @@ fun SettingsScreen(
         mutableStateOf(LocalDate.now().minusYears(uiState.age.toLong()))
     }
 
-    LaunchedEffect(uiState.age) {
-        if (!showBirthDateDialog) {
-            birthDate = LocalDate.now().minusYears(uiState.age.toLong())
-        }
-    }
-
     if (showBirthDateDialog) {
         val initialMillis = remember(birthDate) {
-            birthDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            birthDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         }
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
@@ -294,7 +286,7 @@ fun SettingsScreen(
                         val selectedMillis = datePickerState.selectedDateMillis
                         if (selectedMillis != null) {
                             val selectedDate = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneOffset.UTC)
+                                .atZone(ZoneId.systemDefault())
                                 .toLocalDate()
                             birthDate = selectedDate
                             val calculatedAge = Period.between(selectedDate, LocalDate.now()).years
