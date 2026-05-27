@@ -26,13 +26,15 @@ import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +58,13 @@ import com.luleme.ui.auth.SystemAuth
 import com.luleme.ui.theme.CutePink
 import com.luleme.ui.theme.SecondaryLight
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
@@ -69,6 +77,7 @@ fun SettingsScreen(
     var showClearDialog by remember { mutableStateOf(false) }
     var showWebDavDialog by remember { mutableStateOf(false) }
     var showWebDavRestoreDialog by remember { mutableStateOf(false) }
+    var showBirthDateDialog by remember { mutableStateOf(false) }
     var webDavBusy by remember { mutableStateOf(false) }
 
     fun toggleSystemLock(enabled: Boolean) {
@@ -258,6 +267,45 @@ fun SettingsScreen(
         )
     }
 
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
+    var birthDate by remember(uiState.age) {
+        mutableStateOf(LocalDate.now().minusYears(uiState.age.toLong()))
+    }
+
+    if (showBirthDateDialog) {
+        val initialMillis = remember(birthDate) {
+            birthDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        }
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+
+        DatePickerDialog(
+            onDismissRequest = { showBirthDateDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val selectedDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                            birthDate = selectedDate
+                            val calculatedAge = Period.between(selectedDate, LocalDate.now()).years
+                                .coerceIn(0, 120)
+                            viewModel.updateAge(calculatedAge)
+                        }
+                        showBirthDateDialog = false
+                    }
+                ) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBirthDateDialog = false }) { Text("取消") }
+            },
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -278,7 +326,10 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showBirthDateDialog = true }
+                            .padding(vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Face,
@@ -286,21 +337,25 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.padding(8.dp))
-                        Text(
-                            text = "年龄: ${uiState.age} 岁",
-                            style = MaterialTheme.typography.titleMedium
-                        )
+                        Column {
+                            Text(
+                                text = "出生日期: ${birthDate.format(dateFormatter)}",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "点击选择出生日期",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
+
                     Spacer(modifier = Modifier.height(8.dp))
-                    Slider(
-                        value = uiState.age.toFloat(),
-                        onValueChange = { viewModel.updateAge(it.toInt()) },
-                        valueRange = 18f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+
+                    Text(
+                        text = "年龄: ${uiState.age} 岁",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
