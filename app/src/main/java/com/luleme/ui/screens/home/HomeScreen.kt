@@ -543,12 +543,11 @@ fun HealthTipCard(frequency: Int, age: Int, todayCount: Int) {
     val recommended = getRecommendedWeeklyFrequency(age)
     val maxRecommended = recommended.last
     
-    val message = when {
-        todayCount >= 2 -> AppText.HOME_HEALTH_MSG_TODAY_MANY
-        todayCount == 1 -> AppText.HOME_HEALTH_MSG_TODAY_ONCE
-        frequency > maxRecommended -> AppText.HOME_HEALTH_MSG_FREQUENT
-        else -> AppText.HOME_HEALTH_MSG_HEALTHY
-    }
+    val message = AppText.homeHealthMessage(
+        todayCount = todayCount,
+        frequency = frequency,
+        maxRecommended = maxRecommended
+    )
     
     val isHighFreq = todayCount >= 2 || frequency > maxRecommended
     

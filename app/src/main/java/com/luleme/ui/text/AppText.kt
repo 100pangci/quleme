@@ -77,6 +77,15 @@ object AppText {
         { GirlText.homeTodayRecorded(count) }
     )
 
+    fun homeHealthMessage(
+        todayCount: Int,
+        frequency: Int,
+        maxRecommended: Int
+    ): String = pick(
+        { BoyText.homeHealthMessage(todayCount, frequency, maxRecommended) },
+        { GirlText.homeHealthMessage(todayCount, frequency, maxRecommended) }
+    )
+
     // Statistics
     val STAT_TAB_WEEK get() = pick({ BoyText.STAT_TAB_WEEK }, { GirlText.STAT_TAB_WEEK })
     val STAT_TAB_MONTH get() = pick({ BoyText.STAT_TAB_MONTH }, { GirlText.STAT_TAB_MONTH })

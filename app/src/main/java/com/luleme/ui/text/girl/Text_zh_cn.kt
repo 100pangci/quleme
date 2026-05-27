@@ -55,6 +55,17 @@ object GirlText {
 
     fun homeTodayRecorded(count: Int): String = "今日已搓 $count 次 ✨"
 
+    fun homeHealthMessage(
+        todayCount: Int,
+        frequency: Int,
+        maxRecommended: Int
+    ): String = when {
+        todayCount >= 2 -> HOME_HEALTH_MSG_TODAY_MANY
+        todayCount == 1 -> HOME_HEALTH_MSG_TODAY_ONCE
+        frequency > maxRecommended -> HOME_HEALTH_MSG_FREQUENT
+        else -> HOME_HEALTH_MSG_HEALTHY
+    }
+
     // Statistics
     const val STAT_TAB_WEEK = "本周"
     const val STAT_TAB_MONTH = "本月"
