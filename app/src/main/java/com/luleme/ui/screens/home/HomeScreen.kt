@@ -33,6 +33,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -377,7 +378,7 @@ private fun SakuraFadeIcon(
         Icon(
             imageVector = Icons.Rounded.LocalFlorist,
             contentDescription = null,
-            tint = Color.Unspecified,
+            tint = LocalContentColor.current,
             modifier = modifier.graphicsLayer {
                 translationY = -fadeProgress * 24f
                 scaleX = 0.96f + fadeProgress * 0.16f
