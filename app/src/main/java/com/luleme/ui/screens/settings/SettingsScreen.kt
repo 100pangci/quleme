@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Face
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -32,6 +33,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -383,22 +387,30 @@ fun SettingsScreen(
         item {
             SettingGroup(title = AppText.SETTINGS_GROUP_STYLE) {
                 SettingItem(
-                    icon = Icons.Rounded.Face,
+                    icon = Icons.Rounded.SwapHoriz,
                     title = AppText.SETTINGS_PROFILE_SWITCH_TITLE,
                     subtitle = AppText.SETTINGS_PROFILE_SWITCH_SUBTITLE,
                     iconTint = MaterialTheme.colorScheme.primary,
                     trailingContent = {
-                        CuteSwitch(
-                            checked = uiState.appProfile == AppProfile.GIRL,
-                            onCheckedChange = { checked ->
-                                viewModel.switchProfile(if (checked) AppProfile.GIRL else AppProfile.BOY)
+                        SingleChoiceSegmentedButtonRow {
+                            SegmentedButton(
+                                selected = uiState.appProfile == AppProfile.BOY,
+                                onClick = { viewModel.switchProfile(AppProfile.BOY) },
+                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                            ) {
+                                Text(AppText.SETTINGS_PROFILE_BOY)
                             }
-                        )
+
+                            SegmentedButton(
+                                selected = uiState.appProfile == AppProfile.GIRL,
+                                onClick = { viewModel.switchProfile(AppProfile.GIRL) },
+                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                            ) {
+                                Text(AppText.SETTINGS_PROFILE_GIRL)
+                            }
+                        }
                     },
-                    onClick = {
-                        val target = if (uiState.appProfile == AppProfile.BOY) AppProfile.GIRL else AppProfile.BOY
-                        viewModel.switchProfile(target)
-                    }
+                    onClick = {}
                 )
             }
         }
