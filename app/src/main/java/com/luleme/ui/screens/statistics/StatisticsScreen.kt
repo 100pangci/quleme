@@ -42,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -116,7 +117,11 @@ fun StatisticsScreen(
 
     val selectedDate = uiState.selectedDate
     if (selectedDate != null) {
-        ModalBottomSheet(onDismissRequest = viewModel::clearSelectedDate) {
+        val dayRecordsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = viewModel::clearSelectedDate,
+            sheetState = dayRecordsSheetState
+        ) {
             DayRecordsContent(
                 date = selectedDate,
                 records = uiState.selectedDateRecords,
@@ -605,29 +610,29 @@ private fun Long.toLocalDateTime(): LocalDateTime {
 }
 
 private val HeartShape = GenericShape { size, _ ->
-    val width = size.width
-    val height = size.height
+    val w = size.width
+    val h = size.height
 
-    moveTo(width / 2f, height * 0.9f)
+    moveTo(w * 0.5f, h * 0.92f)
     cubicTo(
-        width * -0.1f, height * 0.55f,
-        width * 0.05f, height * 0.15f,
-        width * 0.3f, height * 0.2f
+        w * 0.18f, h * 0.72f,
+        w * 0.02f, h * 0.48f,
+        w * 0.08f, h * 0.28f
     )
     cubicTo(
-        width * 0.45f, height * 0.25f,
-        width * 0.5f, height * 0.35f,
-        width / 2f, height * 0.45f
+        w * 0.14f, h * 0.10f,
+        w * 0.34f, h * 0.08f,
+        w * 0.5f, h * 0.26f
     )
     cubicTo(
-        width * 0.5f, height * 0.35f,
-        width * 0.55f, height * 0.25f,
-        width * 0.7f, height * 0.2f
+        w * 0.66f, h * 0.08f,
+        w * 0.86f, h * 0.10f,
+        w * 0.92f, h * 0.28f
     )
     cubicTo(
-        width * 0.95f, height * 0.15f,
-        width * 1.1f, height * 0.55f,
-        width / 2f, height * 0.9f
+        w * 0.98f, h * 0.48f,
+        w * 0.82f, h * 0.72f,
+        w * 0.5f, h * 0.92f
     )
     close()
 }
