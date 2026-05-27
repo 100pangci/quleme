@@ -46,6 +46,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -214,9 +215,15 @@ fun WeekView(weekData: Map<DayOfWeek, Int>) {
                     val count = weekData[day] ?: 0
                     val isSelected = selectedDay == day
                     val heightFraction = if (maxCount > 0) count.toFloat() / maxCount else 0f
+                    var targetHeight by remember { mutableStateOf(0f) }
+
+                    LaunchedEffect(heightFraction) {
+                        targetHeight = heightFraction
+                    }
+
                     val animatedFraction by animateFloatAsState(
-                        targetValue = heightFraction,
-                        animationSpec = tween(durationMillis = 220),
+                        targetValue = targetHeight,
+                        animationSpec = tween(durationMillis = 700, delayMillis = day.ordinal * 70),
                         label = "week_bar_height"
                     )
 
