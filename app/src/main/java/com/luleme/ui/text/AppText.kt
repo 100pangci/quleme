@@ -47,6 +47,7 @@ object AppText {
     val LOCK_GO_TO_SYSTEM_SETTINGS get() = pick({ BoyText.LOCK_GO_TO_SYSTEM_SETTINGS }, { GirlText.LOCK_GO_TO_SYSTEM_SETTINGS })
 
     // Home
+    val HOME_TAKEOFF_ANIMATION_STYLE get() = pick({ BoyText.HOME_TAKEOFF_ANIMATION_STYLE }, { GirlText.HOME_TAKEOFF_ANIMATION_STYLE })
     val HOME_ERROR_PREFIX get() = pick({ BoyText.HOME_ERROR_PREFIX }, { GirlText.HOME_ERROR_PREFIX })
     val HOME_WEEK_OVERVIEW get() = pick({ BoyText.HOME_WEEK_OVERVIEW }, { GirlText.HOME_WEEK_OVERVIEW })
     val HOME_STATS_COUNT get() = pick({ BoyText.HOME_STATS_COUNT }, { GirlText.HOME_STATS_COUNT })

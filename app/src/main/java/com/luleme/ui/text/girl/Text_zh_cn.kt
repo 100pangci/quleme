@@ -1,5 +1,7 @@
 package com.quleme.ui.text.girl
 
+import com.quleme.ui.text.HomeTakeoffAnimationStyle
+
 object GirlText {
     // Common
     const val CANCEL = "取消"
@@ -26,6 +28,7 @@ object GirlText {
     const val LOCK_GO_TO_SYSTEM_SETTINGS = "前往系统设置"
 
     // Home
+    val HOME_TAKEOFF_ANIMATION_STYLE = HomeTakeoffAnimationStyle.SAKURA_FADE
     const val HOME_ERROR_PREFIX = "哎呀，出错了: "
     const val HOME_WEEK_OVERVIEW = "本周概览"
     const val HOME_STATS_COUNT = "次数"

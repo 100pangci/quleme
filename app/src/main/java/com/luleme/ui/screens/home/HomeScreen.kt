@@ -54,6 +54,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quleme.ui.components.CuteCard
 import com.quleme.ui.text.AppText
+import com.quleme.ui.text.HomeTakeoffAnimationStyle
 import com.quleme.ui.theme.CuteOrange
 import com.quleme.ui.theme.CutePink
 import com.quleme.ui.theme.CuteYellow
@@ -207,6 +208,7 @@ fun TakeoffButton(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "button_scale"
     )
+    val takeoffAnimationStyle = AppText.HOME_TAKEOFF_ANIMATION_STYLE
 
     val handleTakeoff = {
         if (!isTakingOff) {
@@ -251,7 +253,10 @@ fun TakeoffButton(
                     pressedElevation = 2.dp
                 )
             ) {
-                TakeoffIcon(progress = takeoffProgress.value)
+                TakeoffVisual(
+                    style = takeoffAnimationStyle,
+                    progress = takeoffProgress.value
+                )
                 Spacer(modifier = Modifier.size(12.dp))
                 Text(
                     AppText.HOME_TAKEOFF,
@@ -274,7 +279,11 @@ fun TakeoffButton(
                     .height(48.dp)
                     .scale(scale)
             ) {
-                TakeoffIcon(progress = takeoffProgress.value, modifier = Modifier.size(18.dp))
+                TakeoffVisual(
+                    style = takeoffAnimationStyle,
+                    progress = takeoffProgress.value,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(AppText.HOME_TAKEOFF_AGAIN)
             }
@@ -307,7 +316,25 @@ private fun BoxScope.TakeoffPulse(progress: Float) {
 }
 
 @Composable
-private fun TakeoffIcon(
+private fun TakeoffVisual(
+    style: HomeTakeoffAnimationStyle,
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    when (style) {
+        HomeTakeoffAnimationStyle.PLANE_TAKEOFF -> PlaneTakeoffIcon(
+            progress = progress,
+            modifier = modifier
+        )
+        HomeTakeoffAnimationStyle.SAKURA_FADE -> SakuraFadeIcon(
+            progress = progress,
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun PlaneTakeoffIcon(
     progress: Float,
     modifier: Modifier = Modifier
 ) {
@@ -334,6 +361,27 @@ private fun TakeoffIcon(
                     scaleX = 0.72f + doneProgress * 0.28f
                     scaleY = 0.72f + doneProgress * 0.28f
                 }
+        )
+    }
+}
+
+@Composable
+private fun SakuraFadeIcon(
+    progress: Float,
+    modifier: Modifier = Modifier
+) {
+    val fadeProgress = ((progress - 0.1f) / 0.9f).coerceIn(0f, 1f)
+    val alpha = 1f - fadeProgress
+    Box(contentAlignment = Alignment.Center) {
+        Text(
+            text = "🌸",
+            modifier = modifier.graphicsLayer {
+                translationY = -fadeProgress * 30f
+                scaleX = 1f + fadeProgress * 0.2f
+                scaleY = 1f + fadeProgress * 0.2f
+                rotationZ = -8f * fadeProgress
+                this.alpha = alpha
+            }
         )
     }
 }
