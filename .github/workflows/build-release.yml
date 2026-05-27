@@ -103,7 +103,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
-          name: 撸了么 v${{ steps.version.outputs.VERSION }}
+          name: 去了么 v${{ steps.version.outputs.VERSION }}
           files: release/quleme.apk
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == true }}
