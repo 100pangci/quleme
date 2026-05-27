@@ -531,7 +531,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp)
-                    .clickable { uriHandler.openUri("https://github.com/sky22333/quleme") },
+                    .clickable { uriHandler.openUri("https://github.com/sky22333/luleme") },
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }
