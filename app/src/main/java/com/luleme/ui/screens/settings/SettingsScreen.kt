@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Face
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.SwapHoriz
 import androidx.compose.material.icons.rounded.Upload
@@ -47,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
@@ -398,7 +400,19 @@ fun SettingsScreen(
                                 onClick = { viewModel.switchProfile(AppProfile.BOY) },
                                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
                             ) {
-                                Text(AppText.SETTINGS_PROFILE_BOY)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .alpha(if (uiState.appProfile == AppProfile.BOY) 1f else 0f)
+                                    )
+                                    Text(AppText.SETTINGS_PROFILE_BOY)
+                                }
                             }
 
                             SegmentedButton(
@@ -406,7 +420,19 @@ fun SettingsScreen(
                                 onClick = { viewModel.switchProfile(AppProfile.GIRL) },
                                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
                             ) {
-                                Text(AppText.SETTINGS_PROFILE_GIRL)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .alpha(if (uiState.appProfile == AppProfile.GIRL) 1f else 0f)
+                                    )
+                                    Text(AppText.SETTINGS_PROFILE_GIRL)
+                                }
                             }
                         }
                     },

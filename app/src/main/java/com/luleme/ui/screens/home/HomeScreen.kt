@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FlightTakeoff
+import androidx.compose.material.icons.rounded.LocalFlorist
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.WbSunny
 import androidx.compose.material3.Button
@@ -373,13 +374,15 @@ private fun SakuraFadeIcon(
     val fadeProgress = ((progress - 0.1f) / 0.9f).coerceIn(0f, 1f)
     val alpha = 1f - fadeProgress
     Box(contentAlignment = Alignment.Center) {
-        Text(
-            text = "🌸",
+        Icon(
+            imageVector = Icons.Rounded.LocalFlorist,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = modifier.graphicsLayer {
-                translationY = -fadeProgress * 30f
-                scaleX = 1f + fadeProgress * 0.2f
-                scaleY = 1f + fadeProgress * 0.2f
-                rotationZ = -8f * fadeProgress
+                translationY = -fadeProgress * 24f
+                scaleX = 0.96f + fadeProgress * 0.16f
+                scaleY = 0.96f + fadeProgress * 0.16f
+                rotationZ = -10f * fadeProgress
                 this.alpha = alpha
             }
         )
