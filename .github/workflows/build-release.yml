@@ -89,15 +89,37 @@ jobs:
         run: |
           version="${{ steps.version.outputs.VERSION }}"
           current_tag="v${version}"
-          previous_tag="$(git tag --sort=-v:refname | grep -v "^${current_tag}$" | head -n 1 || true)"
 
-          if [ -n "$previous_tag" ]; then
-            range="${previous_tag}..HEAD"
+          if git rev-parse -q --verify "refs/tags/${current_tag}" >/dev/null; then
+            if [ "$(git rev-parse "${current_tag}^{commit}")" = "$(git rev-parse HEAD)" ]; then
+              previous_tag="$(git describe --tags --abbrev=0 "${current_tag}^{commit}^" 2>/dev/null || true)"
+              if [ -n "$previous_tag" ]; then
+                range="${previous_tag}..${current_tag}"
+              else
+                range="${current_tag}"
+              fi
+            else
+              range="${current_tag}..HEAD"
+            fi
           else
-            range="HEAD"
+            previous_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
+            if [ -n "$previous_tag" ]; then
+              range="${previous_tag}..HEAD"
+            else
+              range="HEAD"
+            fi
           fi
 
-          commits="$(git log "$range" --no-merges --pretty=format:'- %s (%h)' || true)"
+          if [ "$range" != "HEAD" ]; then
+            echo "Release notes range: $range"
+          else
+            echo "Release notes range: all commits"
+          fi
+
+          commits="$(
+            git log "$range" --no-merges --pretty=format:'%s%x09%h' |
+              awk -F '\t' '!seen[$1]++ { printf "- %s (%s)\n", $1, $2 }'
+          )"
           if [ -z "$commits" ]; then
             commits="- 暂无提交记录"
           fi
