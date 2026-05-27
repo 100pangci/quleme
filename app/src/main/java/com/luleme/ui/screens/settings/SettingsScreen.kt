@@ -405,7 +405,7 @@ private fun ClearDataDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
 
 @Composable
 private fun WebDavConfigDialog(
-    uiState: dynamic, // 根据你的实际类型替换 (e.g., SettingsUiState)
+    uiState: SettingsUiState,
     isBusy: Boolean,
     onDismiss: () -> Unit,
     onSave: (String, String, String, String) -> Unit
@@ -422,7 +422,7 @@ private fun WebDavConfigDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
-                    value = url as String,
+                    value = url,
                     onValueChange = { url = it },
                     label = { Text(AppText.SETTINGS_WEBDAV_SERVER_URL) },
                     placeholder = { Text("https://example.com/dav") },
@@ -430,7 +430,7 @@ private fun WebDavConfigDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
-                    value = username as String,
+                    value = username,
                     onValueChange = { username = it },
                     label = { Text(AppText.SETTINGS_WEBDAV_USERNAME) },
                     singleLine = true,
@@ -451,7 +451,7 @@ private fun WebDavConfigDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
-                    value = directory as String,
+                    value = directory,
                     onValueChange = { directory = it },
                     label = { Text(AppText.SETTINGS_WEBDAV_DIRECTORY_OPTIONAL) },
                     placeholder = { Text("quleme") },
@@ -462,7 +462,7 @@ private fun WebDavConfigDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onSave(url as String, username as String, password, directory as String) },
+                onClick = { onSave(url, username, password, directory) },
                 enabled = !isBusy
             ) {
                 if (isBusy) {
