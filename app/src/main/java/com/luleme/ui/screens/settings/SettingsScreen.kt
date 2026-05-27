@@ -55,6 +55,7 @@ import com.luleme.ui.components.SettingItem
 import com.luleme.ui.auth.SystemAuth
 import com.luleme.ui.theme.CutePink
 import com.luleme.ui.theme.SecondaryLight
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 @Composable
@@ -275,6 +276,9 @@ fun SettingsScreen(
 
         item {
             SettingGroup(title = "个人信息") {
+                var ageSliderValue by remember(uiState.age) { mutableStateOf(uiState.age.toFloat()) }
+                val pendingAge = ageSliderValue.roundToInt().coerceIn(18, 100)
+
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -287,15 +291,22 @@ fun SettingsScreen(
                         )
                         Spacer(modifier = Modifier.padding(8.dp))
                         Text(
-                            text = "年龄: ${uiState.age} 岁",
+                            text = "年龄: $pendingAge 岁",
                             style = MaterialTheme.typography.titleMedium
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Slider(
-                        value = uiState.age.toFloat(),
-                        onValueChange = { viewModel.updateAge(it.toInt()) },
+                        value = ageSliderValue,
+                        onValueChange = { ageSliderValue = it },
+                        onValueChangeFinished = {
+                            val savedAge = ageSliderValue.roundToInt().coerceIn(18, 100)
+                            if (savedAge != uiState.age) {
+                                viewModel.updateAge(savedAge)
+                            }
+                        },
                         valueRange = 18f..100f,
+                        steps = 81,
                         colors = SliderDefaults.colors(
                             thumbColor = MaterialTheme.colorScheme.primary,
                             activeTrackColor = MaterialTheme.colorScheme.primary,

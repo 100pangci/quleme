@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
+import com.luleme.ui.util.observeLocalDates
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
@@ -50,53 +51,54 @@ class StatisticsViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeData() {
         viewModelScope.launch {
-            val today = LocalDate.now()
-            val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-            val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-            val weekCountsFlow = recordRepository.observeDailyCountsBetween(
-                startOfWeek.format(DateTimeFormatter.ISO_DATE),
-                endOfWeek.format(DateTimeFormatter.ISO_DATE)
-            )
-
-            val monthCountsFlow = visibleMonth.flatMapLatest { month ->
-                val monthStart = month.withDayOfMonth(1)
-                val monthEnd = monthStart.with(TemporalAdjusters.lastDayOfMonth())
-                recordRepository.observeDailyCountsBetween(
-                    monthStart.format(DateTimeFormatter.ISO_DATE),
-                    monthEnd.format(DateTimeFormatter.ISO_DATE)
-                ).map { counts -> monthStart to counts }
-            }
-
-            val selectedRecordsFlow = selectedDate.flatMapLatest { date ->
-                if (date == null) {
-                    flowOf<Pair<LocalDate?, List<Record>>>(null to emptyList())
-                } else {
-                    recordRepository.observeRecordsByDate(date.format(DateTimeFormatter.ISO_DATE))
-                        .map { records -> date to records }
-                }
-            }
-
             try {
-                combine(
-                    recordRepository.observeTotalCount(),
-                    recordRepository.observeRecordDates(),
-                    weekCountsFlow,
-                    monthCountsFlow,
-                    selectedRecordsFlow
-                ) { totalCount, recordDates, weekCounts, monthPair, selectedPair ->
-                    val (month, monthCounts) = monthPair
-                    val (selected, selectedRecords) = selectedPair
-                    StatisticsUiState(
-                        weekData = buildWeekData(startOfWeek, weekCounts),
-                        monthData = buildMonthData(month, monthCounts),
-                        visibleMonth = month,
-                        selectedDate = selected,
-                        selectedDateRecords = selectedRecords,
-                        totalCount = totalCount,
-                        maxStreak = calculateMaxStreak(recordDates),
-                        averageFrequency = calculateAverageFrequency(totalCount, recordDates, today),
-                        loading = false
+                observeLocalDates().flatMapLatest { today ->
+                    val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                    val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+                    val weekCountsFlow = recordRepository.observeDailyCountsBetween(
+                        startOfWeek.format(DateTimeFormatter.ISO_DATE),
+                        endOfWeek.format(DateTimeFormatter.ISO_DATE)
                     )
+
+                    val monthCountsFlow = visibleMonth.flatMapLatest { month ->
+                        val monthStart = month.withDayOfMonth(1)
+                        val monthEnd = monthStart.with(TemporalAdjusters.lastDayOfMonth())
+                        recordRepository.observeDailyCountsBetween(
+                            monthStart.format(DateTimeFormatter.ISO_DATE),
+                            monthEnd.format(DateTimeFormatter.ISO_DATE)
+                        ).map { counts -> monthStart to counts }
+                    }
+
+                    val selectedRecordsFlow = selectedDate.flatMapLatest { date ->
+                        if (date == null) {
+                            flowOf<Pair<LocalDate?, List<Record>>>(null to emptyList())
+                        } else {
+                            recordRepository.observeRecordsByDate(date.format(DateTimeFormatter.ISO_DATE))
+                                .map { records -> date to records }
+                        }
+                    }
+
+                    combine(
+                        recordRepository.observeTotalCount(),
+                        recordRepository.observeRecordDates(),
+                        weekCountsFlow,
+                        monthCountsFlow,
+                        selectedRecordsFlow
+                    ) { totalCount, recordDates, weekCounts, monthPair, selectedPair ->
+                        val (month, monthCounts) = monthPair
+                        val (selected, selectedRecords) = selectedPair
+                        StatisticsUiState(
+                            weekData = buildWeekData(startOfWeek, weekCounts),
+                            monthData = buildMonthData(month, monthCounts),
+                            visibleMonth = month,
+                            selectedDate = selected,
+                            selectedDateRecords = selectedRecords,
+                            totalCount = totalCount,
+                            maxStreak = calculateMaxStreak(recordDates),
+                            averageFrequency = calculateAverageFrequency(totalCount, recordDates, today),
+                            loading = false
+                        )
+                    }
                 }.collect { state ->
                     _uiState.value = state
                 }
