@@ -1,6 +1,7 @@
 package com.luleme.data.webdav
 
 import android.util.Base64
+import com.luleme.ui.text.AppText
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -22,10 +23,10 @@ class WebDavClient @Inject constructor() {
         try {
             val code = connection.responseCode
             if (code == HttpURLConnection.HTTP_UNAUTHORIZED || code == HttpURLConnection.HTTP_FORBIDDEN) {
-                throw IOException("WebDAV 认证失败")
+                throw IOException(AppText.WEBDAV_AUTH_FAILED)
             }
             if (code !in 200..299) {
-                throw IOException("WebDAV 连接失败: $code")
+                throw IOException(AppText.webDavConnectionFailed(code))
             }
         } finally {
             connection.disconnect()
@@ -42,7 +43,7 @@ class WebDavClient @Inject constructor() {
             }
             val code = connection.responseCode
             if (code !in 200..299) {
-                throw IOException("WebDAV 上传失败: $code")
+                throw IOException(AppText.webDavUploadFailed(code))
             }
         } finally {
             connection.disconnect()
@@ -54,10 +55,10 @@ class WebDavClient @Inject constructor() {
         return try {
             val code = connection.responseCode
             if (code == HttpURLConnection.HTTP_NOT_FOUND) {
-                throw IOException("未找到云端备份")
+                throw IOException(AppText.WEBDAV_NOT_FOUND)
             }
             if (code !in 200..299) {
-                throw IOException("WebDAV 下载失败: $code")
+                throw IOException(AppText.webDavDownloadFailed(code))
             }
             connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
         } finally {

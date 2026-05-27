@@ -7,5 +7,6 @@ data class UserSettings(
     val webDavUrl: String = "",
     val webDavUsername: String = "",
     val webDavPassword: String = "",
-    val webDavDirectory: String = ""
+    val webDavDirectory: String = "",
+    val appProfile: String = "BOY"
 )

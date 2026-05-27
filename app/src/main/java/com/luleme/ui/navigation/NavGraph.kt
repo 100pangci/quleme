@@ -23,6 +23,7 @@ import com.luleme.ui.screens.home.HomeScreen
 import com.luleme.ui.screens.lock.LockScreen
 import com.luleme.ui.screens.settings.SettingsScreen
 import com.luleme.ui.screens.statistics.StatisticsScreen
+import com.luleme.ui.text.AppText
 
 @Composable
 fun NavGraph(startDestination: String = Screen.Home.route) {
@@ -56,9 +57,9 @@ fun NavGraph(startDestination: String = Screen.Home.route) {
                             },
                             label = {
                                 when (screen) {
-                                    Screen.Home -> Text("主页")
-                                    Screen.Statistics -> Text("统计")
-                                    Screen.Settings -> Text("设置")
+                                    Screen.Home -> Text(AppText.NAV_HOME)
+                                    Screen.Statistics -> Text(AppText.NAV_STATISTICS)
+                                    Screen.Settings -> Text(AppText.NAV_SETTINGS)
                                     else -> {}
                                 }
                             },

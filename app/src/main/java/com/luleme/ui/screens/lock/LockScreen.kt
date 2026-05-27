@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.luleme.ui.auth.SystemAuth
+import com.luleme.ui.text.AppText
 import com.luleme.ui.theme.CutePink
 
 @Composable
@@ -43,18 +44,18 @@ fun LockScreen(
     val context = LocalContext.current
     val activity = context as? FragmentActivity
     var authStarted by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("请使用系统锁屏或生物识别解锁") }
+    var message by remember { mutableStateOf(AppText.LOCK_HINT_USE_SYSTEM_AUTH) }
     var canUseSystemAuth by remember { mutableStateOf(true) }
 
     fun showSystemAuthPrompt() {
         val hostActivity = activity ?: run {
-            message = "当前页面不支持系统认证"
+            message = AppText.LOCK_HINT_UNSUPPORTED
             canUseSystemAuth = false
             return
         }
 
         if (!SystemAuth.canAuthenticate(context)) {
-            message = "请先在系统设置中启用锁屏密码或生物识别"
+            message = AppText.LOCK_HINT_ENABLE_SYSTEM_AUTH
             canUseSystemAuth = false
             return
         }
@@ -73,7 +74,7 @@ fun LockScreen(
                 }
 
                 override fun onAuthenticationFailed() {
-                    message = "验证失败，请重试"
+                    message = AppText.LOCK_HINT_FAILED
                 }
             }
         )
@@ -106,7 +107,7 @@ fun LockScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "欢迎回来",
+                text = AppText.LOCK_WELCOME_BACK,
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold
@@ -126,7 +127,7 @@ fun LockScreen(
                 },
                 enabled = canUseSystemAuth
             ) {
-                Text("重新验证")
+                Text(AppText.LOCK_RETRY)
             }
             if (!canUseSystemAuth) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -135,7 +136,7 @@ fun LockScreen(
                         context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
                     }
                 ) {
-                    Text("前往系统设置")
+                    Text(AppText.LOCK_GO_TO_SYSTEM_SETTINGS)
                 }
             }
         }

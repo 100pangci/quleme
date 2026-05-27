@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.luleme.domain.model.Record
 import com.luleme.domain.repository.RecordRepository
 import com.luleme.domain.repository.UserSettingsRepository
+import com.luleme.ui.text.AppText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -69,7 +70,7 @@ class HomeViewModel @Inject constructor(
                 // If we are already showing data (Success), don't replace it with an error screen on refresh failure.
                 // Only show Error state if we have nothing to show.
                 if (_uiState.value !is HomeUiState.Success) {
-                    _uiState.value = HomeUiState.Error(e.message ?: "未知错误")
+                    _uiState.value = HomeUiState.Error(e.message ?: AppText.HOME_UNKNOWN_ERROR)
                 } else {
                     // TODO: In a real app, we might want to emit a one-time event (like a Snackbar) here
                     // to notify the user that the refresh failed, without destroying the UI.

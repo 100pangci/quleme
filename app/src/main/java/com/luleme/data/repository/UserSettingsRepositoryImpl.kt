@@ -26,7 +26,8 @@ class UserSettingsRepositoryImpl @Inject constructor(
             webDavUrl = this.webDavUrl,
             webDavUsername = this.webDavUsername,
             webDavPassword = this.webDavPassword,
-            webDavDirectory = this.webDavDirectory
+            webDavDirectory = this.webDavDirectory,
+            appProfile = this.appProfile
         )
     }
 
@@ -38,7 +39,8 @@ class UserSettingsRepositoryImpl @Inject constructor(
             webDavUrl = this.webDavUrl,
             webDavUsername = this.webDavUsername,
             webDavPassword = this.webDavPassword,
-            webDavDirectory = this.webDavDirectory
+            webDavDirectory = this.webDavDirectory,
+            appProfile = this.appProfile
         )
     }
 }

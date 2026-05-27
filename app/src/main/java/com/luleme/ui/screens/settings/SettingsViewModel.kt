@@ -1,5 +1,6 @@
 package com.luleme.ui.screens.settings
 
+import android.content.Context
 import androidx.annotation.Keep
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,7 +16,11 @@ import com.luleme.domain.model.Record
 import com.luleme.domain.model.UserSettings
 import com.luleme.domain.repository.RecordRepository
 import com.luleme.domain.repository.UserSettingsRepository
+import com.luleme.ui.text.AppProfile
+import com.luleme.ui.text.AppText
+import com.luleme.ui.text.LauncherProfileManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,11 +41,13 @@ data class SettingsUiState(
     val webDavUrl: String = "",
     val webDavUsername: String = "",
     val webDavDirectory: String = "",
-    val webDavPasswordSaved: Boolean = false
+    val webDavPasswordSaved: Boolean = false,
+    val appProfile: AppProfile = AppProfile.BOY
 )
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val userSettingsRepository: UserSettingsRepository,
     private val recordRepository: RecordRepository,
     private val gson: Gson,
@@ -59,6 +66,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val settings = userSettingsRepository.getSettings()
             if (settings != null) {
+                val profile = AppProfile.fromRaw(settings.appProfile)
+                AppText.applyProfile(profile)
+                LauncherProfileManager.applyProfile(appContext, profile)
                 _uiState.value = SettingsUiState(
                     age = settings.age,
                     lockEnabled = settings.lockEnabled,
@@ -66,14 +76,17 @@ class SettingsViewModel @Inject constructor(
                     webDavUrl = settings.webDavUrl,
                     webDavUsername = settings.webDavUsername,
                     webDavDirectory = settings.webDavDirectory,
-                    webDavPasswordSaved = settings.webDavPassword.isNotBlank()
+                    webDavPasswordSaved = settings.webDavPassword.isNotBlank(),
+                    appProfile = profile
                 )
             } else {
                 // Initialize default settings
                 val defaultBirthDate = LocalDate.now().minusYears(25).format(DateTimeFormatter.ISO_DATE)
-                val default = UserSettings(age = 25, lockEnabled = false, birthDate = defaultBirthDate)
+                val default = UserSettings(age = 25, lockEnabled = false, birthDate = defaultBirthDate, appProfile = AppProfile.BOY.name)
                 userSettingsRepository.saveSettings(default)
-                _uiState.value = SettingsUiState(age = 25, lockEnabled = false, birthDate = defaultBirthDate)
+                AppText.applyProfile(AppProfile.BOY)
+                LauncherProfileManager.applyProfile(appContext, AppProfile.BOY)
+                _uiState.value = SettingsUiState(age = 25, lockEnabled = false, birthDate = defaultBirthDate, appProfile = AppProfile.BOY)
             }
         }
     }
@@ -99,6 +112,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun switchProfile(profile: AppProfile) {
+        viewModelScope.launch {
+            val current = _uiState.value
+            AppText.applyProfile(profile)
+            LauncherProfileManager.applyProfile(appContext, profile)
+            saveSettings(current.copy(appProfile = profile))
+        }
+    }
+
     private suspend fun saveSettings(state: SettingsUiState) {
         userSettingsRepository.saveSettings(
             UserSettings(
@@ -108,7 +130,8 @@ class SettingsViewModel @Inject constructor(
                 webDavUrl = state.webDavUrl,
                 webDavUsername = state.webDavUsername,
                 webDavPassword = currentEncryptedWebDavPassword(),
-                webDavDirectory = state.webDavDirectory
+                webDavDirectory = state.webDavDirectory,
+                appProfile = state.appProfile.name
             )
         )
         _uiState.value = state
@@ -161,7 +184,8 @@ class SettingsViewModel @Inject constructor(
                     webDavUrl = state.webDavUrl,
                     webDavUsername = state.webDavUsername,
                     webDavPassword = encryptedPassword,
-                    webDavDirectory = state.webDavDirectory
+                    webDavDirectory = state.webDavDirectory,
+                    appProfile = state.appProfile.name
                 )
             )
             _uiState.value = state

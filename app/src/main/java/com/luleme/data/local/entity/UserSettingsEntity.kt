@@ -28,5 +28,8 @@ data class UserSettingsEntity(
     val webDavPassword: String = "",
 
     @ColumnInfo(name = "webdav_directory")
-    val webDavDirectory: String = ""
+    val webDavDirectory: String = "",
+
+    @ColumnInfo(name = "app_profile")
+    val appProfile: String = "BOY"
 )

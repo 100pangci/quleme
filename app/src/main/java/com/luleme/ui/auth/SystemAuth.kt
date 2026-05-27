@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import com.luleme.ui.text.AppText
 
 object SystemAuth {
     private val authenticators =
@@ -25,8 +26,8 @@ object SystemAuth {
     fun promptInfo(context: Context): BiometricPrompt.PromptInfo {
         val keyguardManager = context.getSystemService(KeyguardManager::class.java)
         val builder = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("身份验证")
-            .setSubtitle("使用系统锁屏密码或生物识别验证身份")
+            .setTitle(AppText.AUTH_TITLE)
+            .setSubtitle(AppText.AUTH_SUBTITLE)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             builder.setAllowedAuthenticators(authenticators)
@@ -34,7 +35,7 @@ object SystemAuth {
             @Suppress("DEPRECATION")
             builder.setDeviceCredentialAllowed(true)
         } else {
-            builder.setNegativeButtonText("取消")
+            builder.setNegativeButtonText(AppText.AUTH_NEGATIVE)
         }
 
         return builder.build()
