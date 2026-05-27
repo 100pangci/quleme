@@ -1,4 +1,4 @@
-package com.luleme.ui.text.girl
+package com.quleme.ui.text.girl
 
 object GirlText {
     // Common
@@ -139,7 +139,7 @@ object GirlText {
     const val SETTINGS_WEBDAV_TEST_OK = "WebDAV 连接正常"
     const val SETTINGS_WEBDAV_TEST_FAILED = "WebDAV 连接失败"
     const val SETTINGS_WEBDAV_BACKUP = "备份到 WebDAV"
-    const val SETTINGS_WEBDAV_BACKUP_SUBTITLE = "上传为 luleme-backup-latest.json"
+    const val SETTINGS_WEBDAV_BACKUP_SUBTITLE = "上传为 quleme-backup-latest.json"
     const val SETTINGS_WEBDAV_BACKUP_OK = "WebDAV 备份成功 ✨"
     const val SETTINGS_WEBDAV_BACKUP_FAILED = "WebDAV 备份失败"
     const val SETTINGS_WEBDAV_RESTORE = "从 WebDAV 恢复"

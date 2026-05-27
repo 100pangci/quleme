@@ -1,9 +1,9 @@
-package com.luleme.di
+package com.quleme.di
 
-import com.luleme.data.repository.RecordRepositoryImpl
-import com.luleme.data.repository.UserSettingsRepositoryImpl
-import com.luleme.domain.repository.RecordRepository
-import com.luleme.domain.repository.UserSettingsRepository
+import com.quleme.data.repository.RecordRepositoryImpl
+import com.quleme.data.repository.UserSettingsRepositoryImpl
+import com.quleme.domain.repository.RecordRepository
+import com.quleme.domain.repository.UserSettingsRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

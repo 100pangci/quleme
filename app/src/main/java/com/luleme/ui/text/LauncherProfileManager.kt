@@ -1,4 +1,4 @@
-package com.luleme.ui.text
+package com.quleme.ui.text
 
 import android.content.ComponentName
 import android.content.Context
@@ -6,8 +6,8 @@ import android.content.pm.PackageManager
 
 object LauncherProfileManager {
 
-    private const val ALIAS_BOY = "com.luleme.MainActivityBoy"
-    private const val ALIAS_GIRL = "com.luleme.MainActivityGirl"
+    private const val ALIAS_BOY = "com.quleme.MainActivityBoy"
+    private const val ALIAS_GIRL = "com.quleme.MainActivityGirl"
 
     fun applyProfile(context: Context, profile: AppProfile) {
         val packageManager = context.packageManager

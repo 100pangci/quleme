@@ -1,4 +1,4 @@
-package com.luleme.ui.components
+package com.quleme.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background

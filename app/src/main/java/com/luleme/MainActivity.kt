@@ -1,14 +1,14 @@
-package com.luleme
+package com.quleme
 
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
-import com.luleme.ui.AppRoot
-import com.luleme.ui.theme.BackgroundDarkArgb
-import com.luleme.ui.theme.BackgroundLightArgb
-import com.luleme.ui.theme.LulemeTheme
+import com.quleme.ui.AppRoot
+import com.quleme.ui.theme.BackgroundDarkArgb
+import com.quleme.ui.theme.BackgroundLightArgb
+import com.quleme.ui.theme.qulemeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -22,7 +22,7 @@ class MainActivity : FragmentActivity() {
             )
         )
         setContent {
-            LulemeTheme {
+            qulemeTheme {
                 AppRoot()
             }
         }

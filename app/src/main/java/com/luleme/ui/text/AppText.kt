@@ -1,10 +1,10 @@
-package com.luleme.ui.text
+package com.quleme.ui.text
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.luleme.ui.text.boy.BoyText
-import com.luleme.ui.text.girl.GirlText
+import com.quleme.ui.text.boy.BoyText
+import com.quleme.ui.text.girl.GirlText
 
 object AppText {
     var currentProfile by mutableStateOf(AppProfile.BOY)

@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.home
+package com.quleme.ui.screens.home
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.Animatable
@@ -52,12 +52,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luleme.ui.components.CuteCard
-import com.luleme.ui.text.AppText
-import com.luleme.ui.theme.CuteOrange
-import com.luleme.ui.theme.CutePink
-import com.luleme.ui.theme.CuteYellow
-import com.luleme.ui.theme.SecondaryLight
+import com.quleme.ui.components.CuteCard
+import com.quleme.ui.text.AppText
+import com.quleme.ui.theme.CuteOrange
+import com.quleme.ui.theme.CutePink
+import com.quleme.ui.theme.CuteYellow
+import com.quleme.ui.theme.SecondaryLight
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter

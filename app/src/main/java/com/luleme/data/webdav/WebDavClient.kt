@@ -1,7 +1,7 @@
-package com.luleme.data.webdav
+package com.quleme.data.webdav
 
 import android.util.Base64
-import com.luleme.ui.text.AppText
+import com.quleme.ui.text.AppText
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
@@ -91,7 +91,7 @@ class WebDavClient @Inject constructor() {
     }
 
     private companion object {
-        const val LATEST_FILE_NAME = "luleme-backup-latest.json"
+        const val LATEST_FILE_NAME = "quleme-backup-latest.json"
         const val TIMEOUT_MS = 15_000
     }
 }

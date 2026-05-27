@@ -1,4 +1,4 @@
-package com.luleme.ui.navigation
+package com.quleme.ui.navigation
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,11 +23,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.luleme.ui.screens.home.HomeScreen
-import com.luleme.ui.screens.lock.LockScreen
-import com.luleme.ui.screens.settings.SettingsScreen
-import com.luleme.ui.screens.statistics.StatisticsScreen
-import com.luleme.ui.text.AppText
+import com.quleme.ui.screens.home.HomeScreen
+import com.quleme.ui.screens.lock.LockScreen
+import com.quleme.ui.screens.settings.SettingsScreen
+import com.quleme.ui.screens.statistics.StatisticsScreen
+import com.quleme.ui.text.AppText
 
 @Composable
 fun NavGraph(startDestination: String = Screen.Home.route) {

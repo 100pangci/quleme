@@ -1,10 +1,10 @@
-package com.luleme.data.repository
+package com.quleme.data.repository
 
-import com.luleme.data.encryption.EncryptionManager
-import com.luleme.data.local.dao.RecordDao
-import com.luleme.data.local.entity.RecordEntity
-import com.luleme.domain.model.Record
-import com.luleme.domain.repository.RecordRepository
+import com.quleme.data.encryption.EncryptionManager
+import com.quleme.data.local.dao.RecordDao
+import com.quleme.data.local.entity.RecordEntity
+import com.quleme.domain.model.Record
+import com.quleme.domain.repository.RecordRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn

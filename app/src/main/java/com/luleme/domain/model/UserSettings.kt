@@ -1,4 +1,4 @@
-package com.luleme.domain.model
+package com.quleme.domain.model
 
 data class UserSettings(
     val age: Int,

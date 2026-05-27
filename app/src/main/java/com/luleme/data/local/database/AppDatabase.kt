@@ -1,13 +1,13 @@
-package com.luleme.data.local.database
+package com.quleme.data.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.luleme.data.local.dao.RecordDao
-import com.luleme.data.local.dao.UserSettingsDao
-import com.luleme.data.local.entity.RecordEntity
-import com.luleme.data.local.entity.UserSettingsEntity
+import com.quleme.data.local.dao.RecordDao
+import com.quleme.data.local.dao.UserSettingsDao
+import com.quleme.data.local.entity.RecordEntity
+import com.quleme.data.local.entity.UserSettingsEntity
 
 @Database(entities = [RecordEntity::class, UserSettingsEntity::class], version = 3, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {

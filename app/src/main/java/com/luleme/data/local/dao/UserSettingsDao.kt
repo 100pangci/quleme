@@ -1,10 +1,10 @@
-package com.luleme.data.local.dao
+package com.quleme.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.luleme.data.local.entity.UserSettingsEntity
+import com.quleme.data.local.entity.UserSettingsEntity
 
 @Dao
 interface UserSettingsDao {

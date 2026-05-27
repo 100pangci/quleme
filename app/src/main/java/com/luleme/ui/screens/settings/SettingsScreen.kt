@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.settings
+package com.quleme.ui.screens.settings
 
 import android.content.Intent
 import android.provider.Settings
@@ -50,15 +50,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luleme.BuildConfig
-import com.luleme.ui.components.CuteSwitch
-import com.luleme.ui.components.SettingGroup
-import com.luleme.ui.components.SettingItem
-import com.luleme.ui.auth.SystemAuth
-import com.luleme.ui.text.AppProfile
-import com.luleme.ui.text.AppText
-import com.luleme.ui.theme.CutePink
-import com.luleme.ui.theme.SecondaryLight
+import com.quleme.BuildConfig
+import com.quleme.ui.components.CuteSwitch
+import com.quleme.ui.components.SettingGroup
+import com.quleme.ui.components.SettingItem
+import com.quleme.ui.auth.SystemAuth
+import com.quleme.ui.text.AppProfile
+import com.quleme.ui.text.AppText
+import com.quleme.ui.theme.CutePink
+import com.quleme.ui.theme.SecondaryLight
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -200,7 +200,7 @@ fun SettingsScreen(
                         value = directory,
                         onValueChange = { directory = it },
                         label = { Text(AppText.SETTINGS_WEBDAV_DIRECTORY_OPTIONAL) },
-                        placeholder = { Text("luleme") },
+                        placeholder = { Text("quleme") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -427,7 +427,7 @@ fun SettingsScreen(
                     title = AppText.SETTINGS_BACKUP_DATA,
                     subtitle = AppText.SETTINGS_BACKUP_DATA_SUBTITLE,
                     iconTint = SecondaryLight,
-                    onClick = { exportLauncher.launch("luleme_data.json") }
+                    onClick = { exportLauncher.launch("quleme_data.json") }
                 )
                 
                 SettingItem(
@@ -512,13 +512,13 @@ fun SettingsScreen(
         
         item {
             Text(
-                text = "Luleme v${BuildConfig.VERSION_NAME}",
+                text = "quleme v${BuildConfig.VERSION_NAME}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp)
-                    .clickable { uriHandler.openUri("https://github.com/sky22333/luleme") },
+                    .clickable { uriHandler.openUri("https://github.com/sky22333/quleme") },
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         }

@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.settings
+package com.quleme.ui.screens.settings
 
 import android.content.Context
 import androidx.annotation.Keep
@@ -10,16 +10,16 @@ import com.google.gson.JsonParser
 import com.google.gson.Strictness
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
-import com.luleme.data.encryption.EncryptionManager
-import com.luleme.data.webdav.WebDavClient
-import com.luleme.data.webdav.WebDavConfig
-import com.luleme.domain.model.Record
-import com.luleme.domain.model.UserSettings
-import com.luleme.domain.repository.RecordRepository
-import com.luleme.domain.repository.UserSettingsRepository
-import com.luleme.ui.text.AppProfile
-import com.luleme.ui.text.AppText
-import com.luleme.ui.text.LauncherProfileManager
+import com.quleme.data.encryption.EncryptionManager
+import com.quleme.data.webdav.WebDavClient
+import com.quleme.data.webdav.WebDavConfig
+import com.quleme.domain.model.Record
+import com.quleme.domain.model.UserSettings
+import com.quleme.domain.repository.RecordRepository
+import com.quleme.domain.repository.UserSettingsRepository
+import com.quleme.ui.text.AppProfile
+import com.quleme.ui.text.AppText
+import com.quleme.ui.text.LauncherProfileManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

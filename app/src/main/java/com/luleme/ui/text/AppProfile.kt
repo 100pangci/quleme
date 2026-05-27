@@ -1,4 +1,4 @@
-package com.luleme.ui.text
+package com.quleme.ui.text
 
 enum class AppProfile {
     BOY,

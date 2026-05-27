@@ -1,4 +1,4 @@
-package com.luleme.data.local.entity
+package com.quleme.data.local.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

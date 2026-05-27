@@ -1,4 +1,4 @@
-package com.luleme.ui.theme
+package com.quleme.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -67,7 +67,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun LulemeTheme(
+fun qulemeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Disable dynamic color to maintain consistent "Cute" branding
     dynamicColor: Boolean = false,

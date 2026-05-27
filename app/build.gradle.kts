@@ -29,7 +29,7 @@ ksp {
 }
 
 android {
-    namespace = "com.luleme"
+    namespace = "com.quleme"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.luleme"
+        applicationId = "com.quleme"
         minSdk = 26
         targetSdk = 36
         versionCode = versionCodeFromFile

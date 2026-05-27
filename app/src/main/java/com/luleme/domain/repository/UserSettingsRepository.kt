@@ -1,6 +1,6 @@
-package com.luleme.domain.repository
+package com.quleme.domain.repository
 
-import com.luleme.domain.model.UserSettings
+import com.quleme.domain.model.UserSettings
 
 interface UserSettingsRepository {
     suspend fun getSettings(): UserSettings?

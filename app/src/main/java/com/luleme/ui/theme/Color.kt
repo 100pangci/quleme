@@ -1,4 +1,4 @@
-package com.luleme.ui.theme
+package com.quleme.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-# ProGuard Rules for Luleme App
+# ProGuard Rules for quleme App
 
 # Room
 -keep class androidx.room.RoomDatabase { *; }
@@ -6,12 +6,12 @@
 -dontwarn androidx.room.paging.**
 
 # Hilt/Dagger
--keep class com.luleme.LulemeApplication
--keep class com.luleme.di.** { *; }
+-keep class com.quleme.qulemeApplication
+-keep class com.quleme.di.** { *; }
 -keepnames class dagger.hilt.android.internal.managers.ViewComponentManager$FragmentContextWrapper$LayoutInflaterFactoryWrapper
 
 # Data Classes (Gson serialization)
--keep class com.luleme.domain.model.** { *; }
+-keep class com.quleme.domain.model.** { *; }
 
 # Compose
 -keep class androidx.compose.ui.** { *; }

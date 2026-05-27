@@ -1,4 +1,4 @@
-package com.luleme.di
+package com.quleme.di
 
 import com.google.gson.Gson
 import dagger.Module

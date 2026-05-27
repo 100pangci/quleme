@@ -1,9 +1,9 @@
-package com.luleme.data.repository
+package com.quleme.data.repository
 
-import com.luleme.data.local.dao.UserSettingsDao
-import com.luleme.data.local.entity.UserSettingsEntity
-import com.luleme.domain.model.UserSettings
-import com.luleme.domain.repository.UserSettingsRepository
+import com.quleme.data.local.dao.UserSettingsDao
+import com.quleme.data.local.entity.UserSettingsEntity
+import com.quleme.domain.model.UserSettings
+import com.quleme.domain.repository.UserSettingsRepository
 import javax.inject.Inject
 
 class UserSettingsRepositoryImpl @Inject constructor(

@@ -90,13 +90,13 @@ jobs:
       - name: Prepare Release APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/release/*.apk release/luleme.apk
+          cp app/build/outputs/apk/release/*.apk release/quleme.apk
       
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: Luleme-v${{ steps.version.outputs.VERSION }}
-          path: release/luleme.apk
+          name: quleme-v${{ steps.version.outputs.VERSION }}
+          path: release/quleme.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
@@ -104,7 +104,7 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.VERSION }}
           name: 撸了么 v${{ steps.version.outputs.VERSION }}
-          files: release/luleme.apk
+          files: release/quleme.apk
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == true }}
           generate_release_notes: true

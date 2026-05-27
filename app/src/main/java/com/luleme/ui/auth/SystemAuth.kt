@@ -1,11 +1,11 @@
-package com.luleme.ui.auth
+package com.quleme.ui.auth
 
 import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-import com.luleme.ui.text.AppText
+import com.quleme.ui.text.AppText
 
 object SystemAuth {
     private val authenticators =

@@ -1,10 +1,10 @@
-package com.luleme.data.local.dao
+package com.quleme.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
-import com.luleme.data.local.entity.RecordEntity
+import com.quleme.data.local.entity.RecordEntity
 import kotlinx.coroutines.flow.Flow
 
 data class DailyCount(

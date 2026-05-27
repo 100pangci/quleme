@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.statistics
+package com.quleme.ui.screens.statistics
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.animateColorAsState
@@ -63,9 +63,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.luleme.domain.model.Record
-import com.luleme.ui.components.CuteCard
-import com.luleme.ui.text.AppText
+import com.quleme.domain.model.Record
+import com.quleme.ui.components.CuteCard
+import com.quleme.ui.text.AppText
 import java.time.Instant
 import java.time.DayOfWeek
 import java.time.LocalDate

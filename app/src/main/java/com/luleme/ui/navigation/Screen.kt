@@ -1,4 +1,4 @@
-package com.luleme.ui.navigation
+package com.quleme.ui.navigation
 
 sealed class Screen(val route: String) {
     object Lock : Screen("lock")

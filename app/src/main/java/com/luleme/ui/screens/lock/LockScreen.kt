@@ -1,4 +1,4 @@
-package com.luleme.ui.screens.lock
+package com.quleme.ui.screens.lock
 
 import android.content.Intent
 import android.provider.Settings
@@ -33,9 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import com.luleme.ui.auth.SystemAuth
-import com.luleme.ui.text.AppText
-import com.luleme.ui.theme.CutePink
+import com.quleme.ui.auth.SystemAuth
+import com.quleme.ui.text.AppText
+import com.quleme.ui.theme.CutePink
 
 @Composable
 fun LockScreen(

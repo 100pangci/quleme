@@ -1,11 +1,11 @@
-package com.luleme.ui.screens.home
+package com.quleme.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luleme.domain.model.Record
-import com.luleme.domain.repository.RecordRepository
-import com.luleme.domain.repository.UserSettingsRepository
-import com.luleme.ui.text.AppText
+import com.quleme.domain.model.Record
+import com.quleme.domain.repository.RecordRepository
+import com.quleme.domain.repository.UserSettingsRepository
+import com.quleme.ui.text.AppText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -1,6 +1,6 @@
-package com.luleme.domain.repository
+package com.quleme.domain.repository
 
-import com.luleme.domain.model.Record
+import com.quleme.domain.model.Record
 import kotlinx.coroutines.flow.Flow
 
 interface RecordRepository {

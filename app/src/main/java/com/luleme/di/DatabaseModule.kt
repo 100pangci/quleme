@@ -1,10 +1,10 @@
-package com.luleme.di
+package com.quleme.di
 
 import android.content.Context
 import androidx.room.Room
-import com.luleme.data.local.dao.RecordDao
-import com.luleme.data.local.dao.UserSettingsDao
-import com.luleme.data.local.database.AppDatabase
+import com.quleme.data.local.dao.RecordDao
+import com.quleme.data.local.dao.UserSettingsDao
+import com.quleme.data.local.database.AppDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,7 +22,7 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "luleme_db"
+            "quleme_db"
         )
             .addMigrations(
                 AppDatabase.MIGRATION_1_2,

@@ -1,9 +1,9 @@
-package com.luleme.ui.screens.statistics
+package com.quleme.ui.screens.statistics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.luleme.domain.model.Record
-import com.luleme.domain.repository.RecordRepository
+import com.quleme.domain.model.Record
+import com.quleme.domain.repository.RecordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine

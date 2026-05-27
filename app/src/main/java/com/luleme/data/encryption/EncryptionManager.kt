@@ -1,4 +1,4 @@
-package com.luleme.data.encryption
+package com.quleme.data.encryption
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 @Singleton
 class EncryptionManager @Inject constructor() {
-    private val keyAlias = "luleme_master_key"
+    private val keyAlias = "quleme_master_key"
     private val androidKeyStore = "AndroidKeyStore"
     private val transformation = "AES/GCM/NoPadding"
 
