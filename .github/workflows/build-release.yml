@@ -2,14 +2,8 @@ name: Build and Release
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'VERSION'
-      - 'app/**'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
-      - '.github/workflows/**'
+    tags:
+      - 'v*' # 仅在推送以 v 开头的标签（如 v1.0.0）时触发构建
   workflow_dispatch:
     inputs:
       prerelease:
