@@ -41,8 +41,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -61,7 +61,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luleme.domain.model.Record
 import com.luleme.ui.components.CuteCard
@@ -90,7 +90,7 @@ fun StatisticsScreen(
     var deletingRecord by remember { mutableStateOf<Record?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = selectedTab) {
+        PrimaryTabRow(selectedTabIndex = selectedTab) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTab == index,
@@ -216,16 +216,16 @@ fun WeekView(weekData: Map<DayOfWeek, Int>) {
                     val count = weekData[day] ?: 0
                     val isSelected = selectedDay == day
                     val heightFraction = if (maxCount > 0) count.toFloat() / maxCount else 0f
-                    
-                    var animatedHeight by remember { mutableStateOf(0f) }
-                    
-                    LaunchedEffect(count) {
-                        animatedHeight = heightFraction
+                    var targetHeight by remember { mutableStateOf(0f) }
+
+                    LaunchedEffect(heightFraction) {
+                        targetHeight = heightFraction
                     }
-                    
+
                     val animatedFraction by animateFloatAsState(
-                        targetValue = animatedHeight,
-                        animationSpec = tween(durationMillis = 800, delayMillis = day.ordinal * 100)
+                        targetValue = targetHeight,
+                        animationSpec = tween(durationMillis = 700, delayMillis = day.ordinal * 70),
+                        label = "week_bar_height"
                     )
 
                     Column(

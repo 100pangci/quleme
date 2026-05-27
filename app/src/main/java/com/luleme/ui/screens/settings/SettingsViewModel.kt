@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonParser
+import com.google.gson.Strictness
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import com.luleme.data.encryption.EncryptionManager
@@ -242,7 +243,7 @@ class SettingsViewModel @Inject constructor(
         val sanitized = json.trim().trimStart('\uFEFF')
         if (sanitized.isEmpty()) return null
         val reader = JsonReader(StringReader(sanitized))
-        reader.isLenient = false
+        reader.setStrictness(Strictness.LEGACY_STRICT)
         val element = JsonParser.parseReader(reader)
         if (!element.isJsonObject) return null
         val obj = element.asJsonObject
