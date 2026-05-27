@@ -38,7 +38,13 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.5'
+          gradle-version: '9.4.1'
+
+      - name: Check Debug Build
+        run: gradle :app:assembleDebug
+
+      - name: Run Android Lint
+        run: gradle :app:lintDebug
 
       - name: Validate Signing Config
         if: env.HAS_SIGNING_CONFIG != 'true'
