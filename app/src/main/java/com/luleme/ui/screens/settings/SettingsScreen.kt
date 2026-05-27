@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -268,8 +269,14 @@ fun SettingsScreen(
     }
 
     val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
-    var birthDate by remember(uiState.age) {
+    var birthDate by remember {
         mutableStateOf(LocalDate.now().minusYears(uiState.age.toLong()))
+    }
+
+    LaunchedEffect(uiState.age) {
+        if (!showBirthDateDialog) {
+            birthDate = LocalDate.now().minusYears(uiState.age.toLong())
+        }
     }
 
     if (showBirthDateDialog) {
