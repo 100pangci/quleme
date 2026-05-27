@@ -6,6 +6,7 @@ import com.quleme.domain.model.Record
 import com.quleme.domain.repository.RecordRepository
 import com.quleme.domain.repository.UserSettingsRepository
 import com.quleme.ui.text.AppText
+import com.quleme.ui.util.observeLocalDates
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine

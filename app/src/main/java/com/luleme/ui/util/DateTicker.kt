@@ -1,4 +1,4 @@
-package com.luleme.ui.util
+package com.quleme.ui.util
 
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
