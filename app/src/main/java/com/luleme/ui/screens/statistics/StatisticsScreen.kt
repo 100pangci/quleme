@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -446,7 +448,11 @@ fun DayRecordsContent(
     onDelete: (Record) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 520.dp)
+    ) {
         Text(
             text = AppText.statDayTitle(date.monthValue, date.dayOfMonth),
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
@@ -459,36 +465,43 @@ fun DayRecordsContent(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        records.forEach { record ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = record.timestamp.toLocalDateTime().toLocalTime()
-                            .format(DateTimeFormatter.ofPattern("HH:mm")),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    if (!record.note.isNullOrBlank()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = true)
+        ) {
+            items(records.size) { index ->
+                val record = records[index]
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = record.note,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = record.timestamp.toLocalDateTime().toLocalTime()
+                                .format(DateTimeFormatter.ofPattern("HH:mm")),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (!record.note.isNullOrBlank()) {
+                            Text(
+                                text = record.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    IconButton(onClick = { onEdit(record) }) {
+                        Icon(Icons.Rounded.Edit, contentDescription = AppText.EDIT)
+                    }
+                    IconButton(onClick = { onDelete(record) }) {
+                        Icon(
+                            Icons.Rounded.Delete,
+                            contentDescription = AppText.DELETE,
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
-                }
-                IconButton(onClick = { onEdit(record) }) {
-                    Icon(Icons.Rounded.Edit, contentDescription = AppText.EDIT)
-                }
-                IconButton(onClick = { onDelete(record) }) {
-                    Icon(
-                        Icons.Rounded.Delete,
-                        contentDescription = AppText.DELETE,
-                        tint = MaterialTheme.colorScheme.error
-                    )
                 }
             }
         }
