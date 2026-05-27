@@ -212,8 +212,8 @@ object AppText {
 
     // profile UI (shared fixed text)
     const val SETTINGS_GROUP_STYLE = "外观与风格"
-    const val SETTINGS_PROFILE_SWITCH_TITLE = "文案配置"
-    const val SETTINGS_PROFILE_SWITCH_SUBTITLE = "切换 Boy / Girl 主题文案、应用名和图标"
-    const val SETTINGS_PROFILE_BOY = "Boy"
-    const val SETTINGS_PROFILE_GIRL = "Girl"
+    const val SETTINGS_PROFILE_SWITCH_TITLE = "性别配置"
+    const val SETTINGS_PROFILE_SWITCH_SUBTITLE = "你是绅士还是淑女？"
+    const val SETTINGS_PROFILE_BOY = "绅士"
+    const val SETTINGS_PROFILE_GIRL = "淑女"
 }
