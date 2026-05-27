@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,8 +34,6 @@ import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -395,27 +394,17 @@ fun MonthView(
                             animationSpec = tween(durationMillis = 120),
                             label = "heatmap_cell_scale"
                         )
-                        
+                        val cellShape = if (count >= 3) HeartShape else CircleShape
+
                         Box(
                             modifier = Modifier
                                 .aspectRatio(1f)
                                 .scale(cellScale)
-                                .clip(CircleShape)
+                                .clip(cellShape)
                                 .clickable { onDateClick(date) }
                                 .background(color = cellColor),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (count >= 3) {
-                                Icon(
-                                    Icons.Rounded.Favorite,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(12.dp)
-                                )
-                            } else if (count > 0) {
-                                // Empty for 1-2, just color
-                            }
-
                             Text(
                                 text = date.dayOfMonth.toString(),
                                 style = MaterialTheme.typography.labelSmall,
@@ -613,6 +602,34 @@ private fun Long.toLocalDateTime(): LocalDateTime {
     return Instant.ofEpochMilli(this)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
+}
+
+private val HeartShape = GenericShape { size, _ ->
+    val width = size.width
+    val height = size.height
+
+    moveTo(width / 2f, height * 0.9f)
+    cubicTo(
+        width * -0.1f, height * 0.55f,
+        width * 0.05f, height * 0.15f,
+        width * 0.3f, height * 0.2f
+    )
+    cubicTo(
+        width * 0.45f, height * 0.25f,
+        width * 0.5f, height * 0.35f,
+        width / 2f, height * 0.45f
+    )
+    cubicTo(
+        width * 0.5f, height * 0.35f,
+        width * 0.55f, height * 0.25f,
+        width * 0.7f, height * 0.2f
+    )
+    cubicTo(
+        width * 0.95f, height * 0.15f,
+        width * 1.1f, height * 0.55f,
+        width / 2f, height * 0.9f
+    )
+    close()
 }
 
 @Composable
