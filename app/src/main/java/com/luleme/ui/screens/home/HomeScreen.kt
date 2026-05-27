@@ -377,7 +377,7 @@ private fun SakuraFadeIcon(
         Icon(
             imageVector = Icons.Rounded.LocalFlorist,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = Color.Unspecified,
             modifier = modifier.graphicsLayer {
                 translationY = -fadeProgress * 24f
                 scaleX = 0.96f + fadeProgress * 0.16f
