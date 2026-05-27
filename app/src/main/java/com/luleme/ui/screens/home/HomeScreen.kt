@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luleme.ui.components.CuteCard
+import com.luleme.ui.text.AppText
 import com.luleme.ui.theme.CuteOrange
 import com.luleme.ui.theme.CutePink
 import com.luleme.ui.theme.CuteYellow
@@ -89,7 +90,7 @@ fun HomeScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "哎呀，出错了: ${state.message}",
+                        "${AppText.HOME_ERROR_PREFIX}${state.message}",
                         color = MaterialTheme.colorScheme.error
                     )
                 }
@@ -131,7 +132,7 @@ fun HomeContent(
             Box(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Column {
                     Text(
-                        text = "本周概览",
+                        text = AppText.HOME_WEEK_OVERVIEW,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -143,9 +144,9 @@ fun HomeContent(
                     ) {
                         Box(modifier = Modifier.weight(1f)) {
                             StatsCard(
-                                title = "次数",
+                                title = AppText.HOME_STATS_COUNT,
                                 value = "${state.weekCount}",
-                                unit = "次",
+                                unit = AppText.STAT_UNIT_TIMES,
                                 icon = Icons.Rounded.Star,
                                 iconTint = CuteYellow
                             )
@@ -153,8 +154,8 @@ fun HomeContent(
                         Box(modifier = Modifier.weight(1f)) {
                             // Placeholder for future stat, using age for now or just generic info
                             StatsCard(
-                                title = "状态",
-                                value = if (state.todayRecords.isNotEmpty()) "贤者模式" else "活跃",
+                                title = AppText.HOME_STATS_STATUS,
+                                value = if (state.todayRecords.isNotEmpty()) AppText.HOME_STATUS_SAGE_MODE else AppText.HOME_STATUS_ACTIVE,
                                 unit = "",
                                 icon = Icons.Rounded.Favorite,
                                 iconTint = CutePink
@@ -253,7 +254,7 @@ fun TakeoffButton(
                 TakeoffIcon(progress = takeoffProgress.value)
                 Spacer(modifier = Modifier.size(12.dp))
                 Text(
-                    "起飞",
+                    AppText.HOME_TAKEOFF,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
             }
@@ -275,7 +276,7 @@ fun TakeoffButton(
             ) {
                 TakeoffIcon(progress = takeoffProgress.value, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("再来一发")
+                Text(AppText.HOME_TAKEOFF_AGAIN)
             }
         }
     }
@@ -339,7 +340,7 @@ private fun TakeoffIcon(
 
 @Composable
 fun HeaderSection() {
-    val date = LocalDate.now().format(DateTimeFormatter.ofPattern("M月d日 EEEE", Locale.CHINA))
+    val date = LocalDate.now().format(DateTimeFormatter.ofPattern(AppText.HOME_DATE_PATTERN, Locale.CHINA))
     val greeting = getGreetingMessage()
     
     Column(
@@ -375,11 +376,11 @@ fun HeaderSection() {
 fun getGreetingMessage(): String {
     val hour = LocalTime.now().hour
     return when (hour) {
-        in 0..4 -> "凌晨好！机长"
-        in 5..10 -> "早上好！机长"
-        in 11..12 -> "中午好！机长"
-        in 13..17 -> "下午好！机长"
-        else -> "晚上好！机长"
+        in 0..4 -> AppText.HOME_GREETING_DAWN
+        in 5..10 -> AppText.HOME_GREETING_MORNING
+        in 11..12 -> AppText.HOME_GREETING_NOON
+        in 13..17 -> AppText.HOME_GREETING_AFTERNOON
+        else -> AppText.HOME_GREETING_EVENING
     }
 }
 
@@ -420,7 +421,7 @@ fun TodayStatusCard(todayCount: Int) {
             
             Column {
                 Text(
-                    text = if (hasRecordedToday) "今日已起飞 $todayCount 次 ✨" else "今日还没起飞",
+                    text = if (hasRecordedToday) AppText.homeTodayRecorded(todayCount) else AppText.HOME_TODAY_NOT_YET,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = if (hasRecordedToday) Color.White else MaterialTheme.colorScheme.onSurface
@@ -428,7 +429,7 @@ fun TodayStatusCard(todayCount: Int) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = if (hasRecordedToday) "保持好心情~" else "别忘了爱自己哦",
+                    text = if (hasRecordedToday) AppText.HOME_KEEP_MOOD else AppText.HOME_DONT_FORGET_LOVE,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = if (hasRecordedToday) Color.White.copy(alpha = 0.9f) 
                                else MaterialTheme.colorScheme.onSurfaceVariant
@@ -491,10 +492,10 @@ fun HealthTipCard(frequency: Int, age: Int, todayCount: Int) {
     val maxRecommended = recommended.last
     
     val message = when {
-        todayCount >= 2 -> "今天起飞有点多次啦，注意身体哦机长 ✈️"
-        todayCount == 1 -> "今天已经起飞啦，心情不错吧~ ✨"
-        frequency > maxRecommended -> "最近有点频繁呢，注意劳逸结合哦 💙"
-        else -> "节奏很健康！继续保持~ ✨"
+        todayCount >= 2 -> AppText.HOME_HEALTH_MSG_TODAY_MANY
+        todayCount == 1 -> AppText.HOME_HEALTH_MSG_TODAY_ONCE
+        frequency > maxRecommended -> AppText.HOME_HEALTH_MSG_FREQUENT
+        else -> AppText.HOME_HEALTH_MSG_HEALTHY
     }
     
     val isHighFreq = todayCount >= 2 || frequency > maxRecommended
@@ -505,7 +506,7 @@ fun HealthTipCard(frequency: Int, age: Int, todayCount: Int) {
     ) {
         Column {
             Text(
-                text = "💡 健康小贴士",
+                text = AppText.HOME_HEALTH_TIP_TITLE,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = if (isHighFreq) MaterialTheme.colorScheme.onTertiaryContainer 

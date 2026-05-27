@@ -22,10 +22,12 @@ class UserSettingsRepositoryImpl @Inject constructor(
         return UserSettings(
             age = this.age,
             lockEnabled = this.lockEnabled,
+            birthDate = this.birthDate,
             webDavUrl = this.webDavUrl,
             webDavUsername = this.webDavUsername,
             webDavPassword = this.webDavPassword,
-            webDavDirectory = this.webDavDirectory
+            webDavDirectory = this.webDavDirectory,
+            appProfile = this.appProfile
         )
     }
 
@@ -33,10 +35,12 @@ class UserSettingsRepositoryImpl @Inject constructor(
         return UserSettingsEntity(
             age = this.age,
             lockEnabled = this.lockEnabled,
+            birthDate = this.birthDate,
             webDavUrl = this.webDavUrl,
             webDavUsername = this.webDavUsername,
             webDavPassword = this.webDavPassword,
-            webDavDirectory = this.webDavDirectory
+            webDavDirectory = this.webDavDirectory,
+            appProfile = this.appProfile
         )
     }
 }

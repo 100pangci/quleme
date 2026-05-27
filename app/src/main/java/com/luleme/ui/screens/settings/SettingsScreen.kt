@@ -26,13 +26,15 @@ import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,10 +55,18 @@ import com.luleme.ui.components.CuteSwitch
 import com.luleme.ui.components.SettingGroup
 import com.luleme.ui.components.SettingItem
 import com.luleme.ui.auth.SystemAuth
+import com.luleme.ui.text.AppProfile
+import com.luleme.ui.text.AppText
 import com.luleme.ui.theme.CutePink
 import com.luleme.ui.theme.SecondaryLight
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.Period
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
@@ -69,12 +79,13 @@ fun SettingsScreen(
     var showClearDialog by remember { mutableStateOf(false) }
     var showWebDavDialog by remember { mutableStateOf(false) }
     var showWebDavRestoreDialog by remember { mutableStateOf(false) }
+    var showBirthDateDialog by remember { mutableStateOf(false) }
     var webDavBusy by remember { mutableStateOf(false) }
 
     fun toggleSystemLock(enabled: Boolean) {
         if (enabled) {
             if (!SystemAuth.canAuthenticate(context)) {
-                Toast.makeText(context, "请先在系统设置中启用锁屏密码或生物识别", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, AppText.SETTINGS_ENABLE_SYSTEM_AUTH_FIRST, Toast.LENGTH_SHORT).show()
                 context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
                 return
             }
@@ -93,9 +104,9 @@ fun SettingsScreen(
                     context.contentResolver.openOutputStream(it)?.use { stream ->
                         stream.write(json.toByteArray(Charsets.UTF_8))
                     } ?: throw IllegalStateException("Unable to open backup file")
-                    Toast.makeText(context, "数据导出成功 ✨", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, AppText.SETTINGS_EXPORT_SUCCESS, Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
-                    Toast.makeText(context, "导出失败了 😣", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, AppText.SETTINGS_EXPORT_FAILED, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -110,13 +121,13 @@ fun SettingsScreen(
                     context.contentResolver.openInputStream(it)?.use { stream ->
                         val json = stream.bufferedReader(Charsets.UTF_8).use { reader -> reader.readText() }
                         if (viewModel.restoreData(json)) {
-                            Toast.makeText(context, "数据恢复成功 ✨", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, AppText.SETTINGS_RESTORE_SUCCESS, Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(context, "数据格式不对哦 😣", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, AppText.SETTINGS_RESTORE_INVALID, Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(context, "恢复失败了 😣", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, AppText.SETTINGS_RESTORE_FAILED, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -125,20 +136,20 @@ fun SettingsScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("要清空所有数据吗？") },
-            text = { Text("这个操作不能撤销哦，所有记录都会消失。") },
+            title = { Text(AppText.SETTINGS_CLEAR_ALL_TITLE) },
+            text = { Text(AppText.SETTINGS_CLEAR_ALL_TEXT) },
             confirmButton = {
                 Button(
                     onClick = {
                         viewModel.clearAllData()
                         showClearDialog = false
-                        Toast.makeText(context, "数据已清空", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, AppText.SETTINGS_CLEARED, Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text("确认清空") }
+                ) { Text(AppText.SETTINGS_CLEAR_CONFIRM) }
             },
             dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) { Text("再想想") }
+                TextButton(onClick = { showClearDialog = false }) { Text(AppText.SETTINGS_THINK_AGAIN) }
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp)
@@ -153,13 +164,13 @@ fun SettingsScreen(
 
         AlertDialog(
             onDismissRequest = { if (!webDavBusy) showWebDavDialog = false },
-            title = { Text("WebDAV 配置") },
+            title = { Text(AppText.SETTINGS_WEBDAV_CONFIG_TITLE) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
                         value = url,
                         onValueChange = { url = it },
-                        label = { Text("服务器地址") },
+                        label = { Text(AppText.SETTINGS_WEBDAV_SERVER_URL) },
                         placeholder = { Text("https://example.com/dav") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -167,20 +178,20 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = username,
                         onValueChange = { username = it },
-                        label = { Text("用户名") },
+                        label = { Text(AppText.SETTINGS_WEBDAV_USERNAME) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text(if (uiState.webDavPasswordSaved) "新密码（留空不改）" else "密码") },
+                        label = { Text(if (uiState.webDavPasswordSaved) AppText.SETTINGS_WEBDAV_NEW_PASSWORD else AppText.SETTINGS_WEBDAV_PASSWORD) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Text(
-                        text = "备份文件会按当前导出格式上传，请妥善保管 WebDAV 账号。",
+                        text = AppText.SETTINGS_WEBDAV_HINT,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth()
@@ -188,7 +199,7 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = directory,
                         onValueChange = { directory = it },
-                        label = { Text("远程目录（可选）") },
+                        label = { Text(AppText.SETTINGS_WEBDAV_DIRECTORY_OPTIONAL) },
                         placeholder = { Text("luleme") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
@@ -204,20 +215,20 @@ fun SettingsScreen(
                             webDavBusy = false
                             if (saved) {
                                 showWebDavDialog = false
-                                Toast.makeText(context, "WebDAV 配置已保存", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, AppText.SETTINGS_WEBDAV_CONFIG_SAVED, Toast.LENGTH_SHORT).show()
                             } else {
-                                Toast.makeText(context, "WebDAV 配置保存失败", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, AppText.SETTINGS_WEBDAV_CONFIG_SAVE_FAILED, Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
                     enabled = !webDavBusy
-                ) { Text("保存") }
+                ) { Text(AppText.SAVE) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showWebDavDialog = false },
                     enabled = !webDavBusy
-                ) { Text("取消") }
+                ) { Text(AppText.CANCEL) }
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp)
@@ -227,8 +238,8 @@ fun SettingsScreen(
     if (showWebDavRestoreDialog) {
         AlertDialog(
             onDismissRequest = { if (!webDavBusy) showWebDavRestoreDialog = false },
-            title = { Text("从 WebDAV 恢复？") },
-            text = { Text("恢复会用云端最新备份替换本地记录，请确认已经选对备份来源。") },
+            title = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TITLE) },
+            text = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TEXT) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -239,23 +250,68 @@ fun SettingsScreen(
                             showWebDavRestoreDialog = false
                             Toast.makeText(
                                 context,
-                                if (restored) "WebDAV 恢复成功 ✨" else "WebDAV 恢复失败",
+                                if (restored) AppText.SETTINGS_WEBDAV_RESTORE_SUCCESS else AppText.SETTINGS_WEBDAV_RESTORE_FAILED,
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     },
                     enabled = !webDavBusy
-                ) { Text("确认恢复") }
+                ) { Text(AppText.SETTINGS_WEBDAV_RESTORE_CONFIRM) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { showWebDavRestoreDialog = false },
                     enabled = !webDavBusy
-                ) { Text("取消") }
+                ) { Text(AppText.CANCEL) }
             },
             containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(24.dp)
         )
+    }
+
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
+    val persistedBirthDate = remember(uiState.birthDate) {
+        runCatching { LocalDate.parse(uiState.birthDate, DateTimeFormatter.ISO_DATE) }.getOrNull()
+    }
+    var birthDate by remember(uiState.birthDate) {
+        mutableStateOf(
+            persistedBirthDate ?: LocalDate.now().minusYears(uiState.age.toLong())
+        )
+    }
+    val displayAge = remember(birthDate) {
+        Period.between(birthDate, LocalDate.now()).years.coerceIn(0, 120)
+    }
+
+    if (showBirthDateDialog) {
+        val initialMillis = remember(birthDate) {
+            birthDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        }
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+
+        DatePickerDialog(
+            onDismissRequest = { showBirthDateDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val selectedDate = Instant.ofEpochMilli(selectedMillis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                            birthDate = selectedDate
+                            viewModel.updateBirthDate(selectedDate)
+                        }
+                        showBirthDateDialog = false
+                    }
+                ) { Text(AppText.CONFIRM) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBirthDateDialog = false }) { Text(AppText.CANCEL) }
+            },
+            shape = RoundedCornerShape(24.dp)
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 
     LazyColumn(
@@ -267,18 +323,21 @@ fun SettingsScreen(
     ) {
         item {
             Text(
-                text = "设置",
+                text = AppText.SETTINGS_TITLE,
                 style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
         }
 
         item {
-            SettingGroup(title = "个人信息") {
+            SettingGroup(title = AppText.SETTINGS_GROUP_PROFILE) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showBirthDateDialog = true }
+                            .padding(vertical = 4.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Face,
@@ -286,32 +345,69 @@ fun SettingsScreen(
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.padding(8.dp))
+                        Column {
+                            Text(
+                                text = AppText.settingsBirthDateText(birthDate.format(dateFormatter)),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = AppText.SETTINGS_BIRTHDAY_PICK,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
-                            text = "年龄: ${uiState.age} 岁",
-                            style = MaterialTheme.typography.titleMedium
+                            text = AppText.SETTINGS_CURRENT_AGE,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                        Text(
+                            text = AppText.settingsAgeText(displayAge),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Slider(
-                        value = uiState.age.toFloat(),
-                        onValueChange = { viewModel.updateAge(it.toInt()) },
-                        valueRange = 18f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer
-                        )
-                    )
                 }
             }
         }
 
         item {
-            SettingGroup(title = "安全与隐私") {
+            SettingGroup(title = AppText.SETTINGS_GROUP_STYLE) {
+                SettingItem(
+                    icon = Icons.Rounded.Face,
+                    title = AppText.SETTINGS_PROFILE_SWITCH_TITLE,
+                    subtitle = AppText.SETTINGS_PROFILE_SWITCH_SUBTITLE,
+                    iconTint = MaterialTheme.colorScheme.primary,
+                    trailingContent = {
+                        CuteSwitch(
+                            checked = uiState.appProfile == AppProfile.GIRL,
+                            onCheckedChange = { checked ->
+                                viewModel.switchProfile(if (checked) AppProfile.GIRL else AppProfile.BOY)
+                            }
+                        )
+                    },
+                    onClick = {
+                        val target = if (uiState.appProfile == AppProfile.BOY) AppProfile.GIRL else AppProfile.BOY
+                        viewModel.switchProfile(target)
+                    }
+                )
+            }
+        }
+
+        item {
+            SettingGroup(title = AppText.SETTINGS_GROUP_SECURITY) {
                 SettingItem(
                     icon = Icons.Rounded.Lock,
-                    title = "应用锁",
-                    subtitle = "使用系统锁屏密码或生物识别",
+                    title = AppText.SETTINGS_APP_LOCK,
+                    subtitle = AppText.SETTINGS_APP_LOCK_SUBTITLE,
                     iconTint = CutePink,
                     trailingContent = {
                         CuteSwitch(
@@ -325,27 +421,27 @@ fun SettingsScreen(
         }
 
         item {
-            SettingGroup(title = "数据管理") {
+            SettingGroup(title = AppText.SETTINGS_GROUP_DATA) {
                 SettingItem(
                     icon = Icons.Rounded.Download,
-                    title = "备份数据",
-                    subtitle = "用于数据迁移等场景",
+                    title = AppText.SETTINGS_BACKUP_DATA,
+                    subtitle = AppText.SETTINGS_BACKUP_DATA_SUBTITLE,
                     iconTint = SecondaryLight,
                     onClick = { exportLauncher.launch("luleme_data.json") }
                 )
                 
                 SettingItem(
                     icon = Icons.Rounded.Upload,
-                    title = "恢复数据",
-                    subtitle = "从 JSON 文件导入",
+                    title = AppText.SETTINGS_RESTORE_DATA,
+                    subtitle = AppText.SETTINGS_RESTORE_DATA_SUBTITLE,
                     iconTint = MaterialTheme.colorScheme.primary,
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) }
                 )
                 
                 SettingItem(
                     icon = Icons.Rounded.Delete,
-                    title = "清空所有数据",
-                    subtitle = "慎重操作",
+                    title = AppText.SETTINGS_CLEAR_ALL,
+                    subtitle = AppText.SETTINGS_CLEAR_ALL_SUBTITLE,
                     iconTint = MaterialTheme.colorScheme.error,
                     onClick = { showClearDialog = true }
                 )
@@ -353,19 +449,19 @@ fun SettingsScreen(
         }
 
         item {
-            SettingGroup(title = "WebDAV 云备份") {
+            SettingGroup(title = AppText.SETTINGS_GROUP_WEBDAV) {
                 SettingItem(
                     icon = Icons.Rounded.Lock,
-                    title = "WebDAV 配置",
-                    subtitle = if (uiState.webDavUrl.isBlank()) "未配置" else uiState.webDavUrl,
+                    title = AppText.SETTINGS_WEBDAV_CONFIG,
+                    subtitle = if (uiState.webDavUrl.isBlank()) AppText.SETTINGS_WEBDAV_NOT_CONFIGURED else uiState.webDavUrl,
                     iconTint = CutePink,
                     onClick = { showWebDavDialog = true }
                 )
 
                 SettingItem(
                     icon = Icons.Rounded.Upload,
-                    title = "测试连接",
-                    subtitle = "验证服务器地址和账号密码",
+                    title = AppText.SETTINGS_WEBDAV_TEST,
+                    subtitle = AppText.SETTINGS_WEBDAV_TEST_SUBTITLE,
                     iconTint = MaterialTheme.colorScheme.primary,
                     onClick = {
                         if (!webDavBusy) {
@@ -375,7 +471,7 @@ fun SettingsScreen(
                                 webDavBusy = false
                                 Toast.makeText(
                                     context,
-                                    if (ok) "WebDAV 连接正常" else "WebDAV 连接失败",
+                                    if (ok) AppText.SETTINGS_WEBDAV_TEST_OK else AppText.SETTINGS_WEBDAV_TEST_FAILED,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -385,8 +481,8 @@ fun SettingsScreen(
 
                 SettingItem(
                     icon = Icons.Rounded.Upload,
-                    title = "备份到 WebDAV",
-                    subtitle = "上传为 luleme-backup-latest.json",
+                    title = AppText.SETTINGS_WEBDAV_BACKUP,
+                    subtitle = AppText.SETTINGS_WEBDAV_BACKUP_SUBTITLE,
                     iconTint = SecondaryLight,
                     onClick = {
                         if (!webDavBusy) {
@@ -396,7 +492,7 @@ fun SettingsScreen(
                                 webDavBusy = false
                                 Toast.makeText(
                                     context,
-                                    if (ok) "WebDAV 备份成功 ✨" else "WebDAV 备份失败",
+                                    if (ok) AppText.SETTINGS_WEBDAV_BACKUP_OK else AppText.SETTINGS_WEBDAV_BACKUP_FAILED,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -406,8 +502,8 @@ fun SettingsScreen(
 
                 SettingItem(
                     icon = Icons.Rounded.Download,
-                    title = "从 WebDAV 恢复",
-                    subtitle = "下载云端最新备份并替换本地记录",
+                    title = AppText.SETTINGS_WEBDAV_RESTORE,
+                    subtitle = AppText.SETTINGS_WEBDAV_RESTORE_SUBTITLE,
                     iconTint = MaterialTheme.colorScheme.primary,
                     onClick = { if (!webDavBusy) showWebDavRestoreDialog = true }
                 )

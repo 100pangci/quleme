@@ -65,6 +65,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.luleme.domain.model.Record
 import com.luleme.ui.components.CuteCard
+import com.luleme.ui.text.AppText
 import java.time.Instant
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -83,7 +84,7 @@ fun StatisticsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("本周", "本月", "全部")
+    val tabs = listOf(AppText.STAT_TAB_WEEK, AppText.STAT_TAB_MONTH, AppText.STAT_TAB_ALL)
     var editingRecord by remember { mutableStateOf<Record?>(null) }
     var addingDate by remember { mutableStateOf<LocalDate?>(null) }
     var deletingRecord by remember { mutableStateOf<Record?>(null) }
@@ -129,7 +130,7 @@ fun StatisticsScreen(
     val dateForAdd = addingDate
     if (dateForAdd != null) {
         RecordEditorDialog(
-            title = "添加记录",
+            title = AppText.STAT_ADD_RECORD,
             initialDate = dateForAdd,
             initialTime = LocalTime.now().withSecond(0).withNano(0),
             initialNote = "",
@@ -145,7 +146,7 @@ fun StatisticsScreen(
     if (recordForEdit != null) {
         val dateTime = recordForEdit.timestamp.toLocalDateTime()
         RecordEditorDialog(
-            title = "编辑记录",
+            title = AppText.STAT_EDIT_RECORD,
             initialDate = dateTime.toLocalDate(),
             initialTime = dateTime.toLocalTime().withSecond(0).withNano(0),
             initialNote = recordForEdit.note.orEmpty(),
@@ -161,8 +162,8 @@ fun StatisticsScreen(
     if (recordForDelete != null) {
         AlertDialog(
             onDismissRequest = { deletingRecord = null },
-            title = { Text("删除这条记录吗？") },
-            text = { Text("删除后无法撤销。") },
+            title = { Text(AppText.STAT_DELETE_CONFIRM_TITLE) },
+            text = { Text(AppText.STAT_DELETE_CONFIRM_TEXT) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -170,12 +171,12 @@ fun StatisticsScreen(
                         deletingRecord = null
                     }
                 ) {
-                    Text("删除")
+                    Text(AppText.DELETE)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { deletingRecord = null }) {
-                    Text("取消")
+                    Text(AppText.CANCEL)
                 }
             }
         )
@@ -196,7 +197,7 @@ fun WeekView(weekData: Map<DayOfWeek, Int>) {
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.primary
         )
-        Text("本周记录", style = MaterialTheme.typography.bodyMedium)
+        Text(AppText.STAT_WEEK_RECORD, style = MaterialTheme.typography.bodyMedium)
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -307,21 +308,21 @@ fun MonthView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onPreviousMonth) {
-                        Icon(Icons.Rounded.ChevronLeft, contentDescription = "上个月")
+                        Icon(Icons.Rounded.ChevronLeft, contentDescription = AppText.STAT_CD_PREV_MONTH)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            "${visibleMonth.year}年${visibleMonth.monthValue}月",
+                            AppText.statMonthTitle(visibleMonth.year, visibleMonth.monthValue),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                         Text(
-                            "共 ${monthData.values.sum()} 次",
+                            AppText.statMonthTotal(monthData.values.sum()),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(onClick = onNextMonth) {
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = "下个月")
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = AppText.STAT_CD_NEXT_MONTH)
                     }
                 }
 
@@ -330,7 +331,7 @@ fun MonthView(
                         onClick = onCurrentMonth,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
-                        Text("回到本月")
+                        Text(AppText.STAT_BACK_TO_CURRENT_MONTH)
                     }
                 }
                 
@@ -338,7 +339,7 @@ fun MonthView(
                 
                 // Days header
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    listOf("一", "二", "三", "四", "五", "六", "日").forEach { 
+                    AppText.STAT_WEEKDAY_HEADERS.forEach { 
                         Text(
                             text = it, 
                             style = MaterialTheme.typography.labelSmall,
@@ -447,12 +448,12 @@ fun DayRecordsContent(
 ) {
     Column(modifier = modifier) {
         Text(
-            text = date.format(DateTimeFormatter.ofPattern("M月d日")),
+            text = AppText.statDayTitle(date.monthValue, date.dayOfMonth),
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = if (records.isEmpty()) "暂无记录" else "记录 ${records.size} 次",
+            text = if (records.isEmpty()) AppText.STAT_NO_RECORD else AppText.statDayCount(records.size),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -480,12 +481,12 @@ fun DayRecordsContent(
                     }
                 }
                 IconButton(onClick = { onEdit(record) }) {
-                    Icon(Icons.Rounded.Edit, contentDescription = "编辑")
+                    Icon(Icons.Rounded.Edit, contentDescription = AppText.EDIT)
                 }
                 IconButton(onClick = { onDelete(record) }) {
                     Icon(
                         Icons.Rounded.Delete,
-                        contentDescription = "删除",
+                        contentDescription = AppText.DELETE,
                         tint = MaterialTheme.colorScheme.error
                     )
                 }
@@ -499,7 +500,7 @@ fun DayRecordsContent(
         ) {
             Icon(Icons.Rounded.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("添加一条记录")
+            Text(AppText.STAT_ADD_ONE_RECORD)
         }
     }
 }
@@ -529,7 +530,7 @@ fun RecordEditorDialog(
                         dateText = it
                         error = null
                     },
-                    label = { Text("日期") },
+                    label = { Text(AppText.STAT_LABEL_DATE) },
                     placeholder = { Text("yyyy-MM-dd") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -540,7 +541,7 @@ fun RecordEditorDialog(
                         timeText = it
                         error = null
                     },
-                    label = { Text("时间") },
+                    label = { Text(AppText.STAT_LABEL_TIME) },
                     placeholder = { Text("HH:mm") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
@@ -548,7 +549,7 @@ fun RecordEditorDialog(
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    label = { Text("备注，可选") },
+                    label = { Text(AppText.STAT_LABEL_NOTE_OPTIONAL) },
                     minLines = 2
                 )
                 error?.let {
@@ -565,18 +566,18 @@ fun RecordEditorDialog(
                 onClick = {
                     val timestamp = parseEditorTimestamp(dateText, timeText)
                     if (timestamp == null) {
-                        error = "日期或时间格式不正确"
+                        error = AppText.STAT_ERROR_DATE_TIME_INVALID
                     } else {
                         onSave(timestamp, noteText.trim().takeIf { it.isNotEmpty() })
                     }
                 }
             ) {
-                Text("保存")
+                Text(AppText.SAVE)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(AppText.CANCEL)
             }
         }
     )
@@ -610,9 +611,9 @@ fun AllTimeView(state: StatisticsUiState) {
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        StatCard(title = "累计记录", value = "${state.totalCount}", unit = "次")
-        StatCard(title = "最长连续", value = "${state.maxStreak}", unit = "天")
-        StatCard(title = "平均频率", value = String.format("%.1f", state.averageFrequency), unit = "次/周")
+        StatCard(title = AppText.STAT_TOTAL, value = "${state.totalCount}", unit = AppText.STAT_UNIT_TIMES)
+        StatCard(title = AppText.STAT_MAX_STREAK, value = "${state.maxStreak}", unit = AppText.STAT_UNIT_DAYS)
+        StatCard(title = AppText.STAT_AVG_FREQUENCY, value = String.format("%.1f", state.averageFrequency), unit = AppText.STAT_UNIT_TIMES_PER_WEEK)
         
         AdviceCard(frequency = state.averageFrequency)
     }
@@ -621,10 +622,10 @@ fun AllTimeView(state: StatisticsUiState) {
 @Composable
 fun AdviceCard(frequency: Float) {
     val message = when {
-        frequency < 1.0f -> "频率控制得很好，继续保持！👍"
-        frequency in 1.0f..3.0f -> "频率适中，生活很健康哦~ ✨"
-        frequency > 3.0f -> "最近有点频繁，要注意身体休息哦 🛌"
-        else -> "开始记录你的生活吧！"
+        frequency < 1.0f -> AppText.STAT_ADVICE_LOW
+        frequency in 1.0f..3.0f -> AppText.STAT_ADVICE_MEDIUM
+        frequency > 3.0f -> AppText.STAT_ADVICE_HIGH
+        else -> AppText.STAT_ADVICE_DEFAULT
     }
     
     CuteCard(
@@ -633,7 +634,7 @@ fun AdviceCard(frequency: Float) {
     ) {
         Column {
             Text(
-                text = "💡 近期建议",
+                text = AppText.STAT_ADVICE_TITLE,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = if (frequency > 3.0f) MaterialTheme.colorScheme.onTertiaryContainer
