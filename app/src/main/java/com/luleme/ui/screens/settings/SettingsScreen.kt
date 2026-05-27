@@ -63,6 +63,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -281,7 +282,7 @@ fun SettingsScreen(
 
     if (showBirthDateDialog) {
         val initialMillis = remember(birthDate) {
-            birthDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            birthDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         }
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
 
@@ -293,7 +294,7 @@ fun SettingsScreen(
                         val selectedMillis = datePickerState.selectedDateMillis
                         if (selectedMillis != null) {
                             val selectedDate = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneId.systemDefault())
+                                .atZone(ZoneOffset.UTC)
                                 .toLocalDate()
                             birthDate = selectedDate
                             val calculatedAge = Period.between(selectedDate, LocalDate.now()).years
