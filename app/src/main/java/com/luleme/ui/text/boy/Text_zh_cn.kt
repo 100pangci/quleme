@@ -36,7 +36,7 @@ object BoyText {
     const val HOME_STATUS_SAGE_MODE = "索然无味"
     const val HOME_STATUS_ACTIVE = "满油待命 ⛽"
     const val HOME_TAKEOFF = "请求起飞 🛫" 
-    const val HOME_TAKEOFF_AGAIN = "梅开二度 ✌️"
+    const val HOME_TAKEOFF_AGAIN = "复飞请求 ✌️"
     const val HOME_GREETING_DAWN = "还在熬夜修仙？夜航辛苦了，机长！"
     const val HOME_GREETING_MORNING = "早上好，机长！今天的风速很适合起飞"
     const val HOME_GREETING_NOON = "中午好！吃点好的补充一下燃油吧"
