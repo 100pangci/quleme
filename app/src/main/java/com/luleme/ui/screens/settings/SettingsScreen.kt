@@ -1,5 +1,6 @@
 package com.quleme.ui.screens.settings
 
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -7,66 +8,33 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.Face
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.SwapHoriz
-import androidx.compose.material.icons.rounded.Upload
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quleme.BuildConfig
+import com.quleme.ui.auth.SystemAuth
 import com.quleme.ui.components.CuteSwitch
 import com.quleme.ui.components.SettingGroup
 import com.quleme.ui.components.SettingItem
-import com.quleme.ui.auth.SystemAuth
 import com.quleme.ui.text.AppProfile
 import com.quleme.ui.text.AppText
 import com.quleme.ui.theme.CutePink
 import com.quleme.ui.theme.SecondaryLight
-import kotlin.math.roundToInt
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -74,7 +42,9 @@ import java.time.Period
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
+// 静态的 Formatter，不需要每次重组都创建
+private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
@@ -83,251 +53,135 @@ fun SettingsScreen(
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val scope = rememberCoroutineScope()
-    
+
+    // --- UI 弹窗状态 ---
     var showClearDialog by remember { mutableStateOf(false) }
     var showWebDavDialog by remember { mutableStateOf(false) }
     var showWebDavRestoreDialog by remember { mutableStateOf(false) }
     var showBirthDateDialog by remember { mutableStateOf(false) }
     var webDavBusy by remember { mutableStateOf(false) }
 
+    // --- 计算属性 ---
+    val birthDate = remember(uiState.birthDate, uiState.age) {
+        runCatching { LocalDate.parse(uiState.birthDate, DateTimeFormatter.ISO_DATE) }
+            .getOrNull() ?: LocalDate.now().minusYears(uiState.age.toLong())
+    }
+    val displayAge = remember(birthDate) {
+        Period.between(birthDate, LocalDate.now()).years.coerceIn(0, 120)
+    }
+
+    // --- 逻辑辅助函数 ---
+    fun showToast(message: String) = Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
     fun toggleSystemLock(enabled: Boolean) {
-        if (enabled) {
-            if (!SystemAuth.canAuthenticate(context)) {
-                Toast.makeText(context, AppText.SETTINGS_ENABLE_SYSTEM_AUTH_FIRST, Toast.LENGTH_SHORT).show()
-                context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
-                return
-            }
+        if (enabled && !SystemAuth.canAuthenticate(context)) {
+            showToast(AppText.SETTINGS_ENABLE_SYSTEM_AUTH_FIRST)
+            context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+            return
         }
         viewModel.toggleLock(enabled)
     }
 
-    // Export/Import Launchers
-    val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/json")
-    ) { uri ->
+    // --- 文件导入/导出 Launchers ---
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         uri?.let {
             scope.launch {
                 try {
                     val json = viewModel.getAllRecordsJson()
                     context.contentResolver.openOutputStream(it)?.use { stream ->
                         stream.write(json.toByteArray(Charsets.UTF_8))
-                    } ?: throw IllegalStateException("Unable to open backup file")
-                    Toast.makeText(context, AppText.SETTINGS_EXPORT_SUCCESS, Toast.LENGTH_SHORT).show()
+                    } ?: throw IllegalStateException("Stream is null")
+                    showToast(AppText.SETTINGS_EXPORT_SUCCESS)
                 } catch (e: Exception) {
-                    Toast.makeText(context, AppText.SETTINGS_EXPORT_FAILED, Toast.LENGTH_SHORT).show()
+                    showToast(AppText.SETTINGS_EXPORT_FAILED)
                 }
             }
         }
     }
 
-    val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             scope.launch {
                 try {
                     context.contentResolver.openInputStream(it)?.use { stream ->
                         val json = stream.bufferedReader(Charsets.UTF_8).use { reader -> reader.readText() }
-                        if (viewModel.restoreData(json)) {
-                            Toast.makeText(context, AppText.SETTINGS_RESTORE_SUCCESS, Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, AppText.SETTINGS_RESTORE_INVALID, Toast.LENGTH_SHORT).show()
-                        }
+                        val success = viewModel.restoreData(json)
+                        showToast(if (success) AppText.SETTINGS_RESTORE_SUCCESS else AppText.SETTINGS_RESTORE_INVALID)
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(context, AppText.SETTINGS_RESTORE_FAILED, Toast.LENGTH_SHORT).show()
+                    showToast(AppText.SETTINGS_RESTORE_FAILED)
                 }
             }
         }
     }
 
+    // --- 独立的 Dialog 组件 (见下方定义) ---
     if (showClearDialog) {
-        AlertDialog(
-            onDismissRequest = { showClearDialog = false },
-            title = { Text(AppText.SETTINGS_CLEAR_ALL_TITLE) },
-            text = { Text(AppText.SETTINGS_CLEAR_ALL_TEXT) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.clearAllData()
-                        showClearDialog = false
-                        Toast.makeText(context, AppText.SETTINGS_CLEARED, Toast.LENGTH_SHORT).show()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) { Text(AppText.SETTINGS_CLEAR_CONFIRM) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) { Text(AppText.SETTINGS_THINK_AGAIN) }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(24.dp)
+        ClearDataDialog(
+            onDismiss = { showClearDialog = false },
+            onConfirm = {
+                viewModel.clearAllData()
+                showClearDialog = false
+                showToast(AppText.SETTINGS_CLEARED)
+            }
         )
     }
 
     if (showWebDavDialog) {
-        var url by remember(showWebDavDialog, uiState.webDavUrl) { mutableStateOf(uiState.webDavUrl) }
-        var username by remember(showWebDavDialog, uiState.webDavUsername) { mutableStateOf(uiState.webDavUsername) }
-        var password by remember(showWebDavDialog) { mutableStateOf("") }
-        var directory by remember(showWebDavDialog, uiState.webDavDirectory) { mutableStateOf(uiState.webDavDirectory) }
-
-        AlertDialog(
-            onDismissRequest = { if (!webDavBusy) showWebDavDialog = false },
-            title = { Text(AppText.SETTINGS_WEBDAV_CONFIG_TITLE) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = { url = it },
-                        label = { Text(AppText.SETTINGS_WEBDAV_SERVER_URL) },
-                        placeholder = { Text("https://example.com/dav") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = { username = it },
-                        label = { Text(AppText.SETTINGS_WEBDAV_USERNAME) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text(if (uiState.webDavPasswordSaved) AppText.SETTINGS_WEBDAV_NEW_PASSWORD else AppText.SETTINGS_WEBDAV_PASSWORD) },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        text = AppText.SETTINGS_WEBDAV_HINT,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = directory,
-                        onValueChange = { directory = it },
-                        label = { Text(AppText.SETTINGS_WEBDAV_DIRECTORY_OPTIONAL) },
-                        placeholder = { Text("quleme") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+        WebDavConfigDialog(
+            uiState = uiState,
+            isBusy = webDavBusy,
+            onDismiss = { if (!webDavBusy) showWebDavDialog = false },
+            onSave = { url, user, pwd, dir ->
+                scope.launch {
+                    webDavBusy = true
+                    val saved = viewModel.saveWebDavConfig(url, user, pwd, dir)
+                    webDavBusy = false
+                    if (saved) {
+                        showWebDavDialog = false
+                        showToast(AppText.SETTINGS_WEBDAV_CONFIG_SAVED)
+                    } else {
+                        showToast(AppText.SETTINGS_WEBDAV_CONFIG_SAVE_FAILED)
+                    }
                 }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            webDavBusy = true
-                            val saved = viewModel.saveWebDavConfig(url, username, password, directory)
-                            webDavBusy = false
-                            if (saved) {
-                                showWebDavDialog = false
-                                Toast.makeText(context, AppText.SETTINGS_WEBDAV_CONFIG_SAVED, Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, AppText.SETTINGS_WEBDAV_CONFIG_SAVE_FAILED, Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    },
-                    enabled = !webDavBusy
-                ) { Text(AppText.SAVE) }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showWebDavDialog = false },
-                    enabled = !webDavBusy
-                ) { Text(AppText.CANCEL) }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(24.dp)
+            }
         )
     }
 
     if (showWebDavRestoreDialog) {
-        AlertDialog(
-            onDismissRequest = { if (!webDavBusy) showWebDavRestoreDialog = false },
-            title = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TITLE) },
-            text = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TEXT) },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            webDavBusy = true
-                            val restored = viewModel.restoreFromWebDav()
-                            webDavBusy = false
-                            showWebDavRestoreDialog = false
-                            Toast.makeText(
-                                context,
-                                if (restored) AppText.SETTINGS_WEBDAV_RESTORE_SUCCESS else AppText.SETTINGS_WEBDAV_RESTORE_FAILED,
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    },
-                    enabled = !webDavBusy
-                ) { Text(AppText.SETTINGS_WEBDAV_RESTORE_CONFIRM) }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showWebDavRestoreDialog = false },
-                    enabled = !webDavBusy
-                ) { Text(AppText.CANCEL) }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(24.dp)
+        WebDavRestoreDialog(
+            isBusy = webDavBusy,
+            onDismiss = { if (!webDavBusy) showWebDavRestoreDialog = false },
+            onConfirm = {
+                scope.launch {
+                    webDavBusy = true
+                    val restored = viewModel.restoreFromWebDav()
+                    webDavBusy = false
+                    showWebDavRestoreDialog = false
+                    showToast(if (restored) AppText.SETTINGS_WEBDAV_RESTORE_SUCCESS else AppText.SETTINGS_WEBDAV_RESTORE_FAILED)
+                }
+            }
         )
-    }
-
-    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd") }
-    val persistedBirthDate = remember(uiState.birthDate) {
-        runCatching { LocalDate.parse(uiState.birthDate, DateTimeFormatter.ISO_DATE) }.getOrNull()
-    }
-    var birthDate by remember(uiState.birthDate) {
-        mutableStateOf(
-            persistedBirthDate ?: LocalDate.now().minusYears(uiState.age.toLong())
-        )
-    }
-    val displayAge = remember(birthDate) {
-        Period.between(birthDate, LocalDate.now()).years.coerceIn(0, 120)
     }
 
     if (showBirthDateDialog) {
-        val initialMillis = remember(birthDate) {
-            birthDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        }
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
-
-        DatePickerDialog(
-            onDismissRequest = { showBirthDateDialog = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val selectedMillis = datePickerState.selectedDateMillis
-                        if (selectedMillis != null) {
-                            val selectedDate = Instant.ofEpochMilli(selectedMillis)
-                                .atZone(ZoneOffset.UTC)
-                                .toLocalDate()
-                            birthDate = selectedDate
-                            viewModel.updateBirthDate(selectedDate)
-                        }
-                        showBirthDateDialog = false
-                    }
-                ) { Text(AppText.CONFIRM) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showBirthDateDialog = false }) { Text(AppText.CANCEL) }
-            },
-            shape = RoundedCornerShape(24.dp)
-        ) {
-            DatePicker(state = datePickerState)
-        }
+        BirthDateDialog(
+            initialDate = birthDate,
+            onDismiss = { showBirthDateDialog = false },
+            onConfirm = { selectedDate ->
+                viewModel.updateBirthDate(selectedDate)
+                showBirthDateDialog = false
+            }
+        )
     }
 
+    // --- 主 UI 布局 ---
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 24.dp)
+        contentPadding = PaddingValues(vertical = 24.dp)
     ) {
         item {
             Text(
@@ -352,7 +206,7 @@ fun SettingsScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary
                         )
-                        Spacer(modifier = Modifier.padding(8.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
                                 text = AppText.settingsBirthDateText(birthDate.format(dateFormatter)),
@@ -366,17 +220,15 @@ fun SettingsScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = AppText.SETTINGS_CURRENT_AGE,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = AppText.settingsAgeText(displayAge),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -399,42 +251,17 @@ fun SettingsScreen(
                             SegmentedButton(
                                 selected = uiState.appProfile == AppProfile.BOY,
                                 onClick = { viewModel.switchProfile(AppProfile.BOY) },
-                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(16.dp)
-                                            .alpha(if (uiState.appProfile == AppProfile.BOY) 1f else 0f)
-                                    )
-                                    Text(AppText.SETTINGS_PROFILE_BOY)
-                                }
-                            }
-
+                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                icon = { SegmentedButtonDefaults.Icon(uiState.appProfile == AppProfile.BOY) },
+                                label = { Text(AppText.SETTINGS_PROFILE_BOY) }
+                            )
                             SegmentedButton(
                                 selected = uiState.appProfile == AppProfile.GIRL,
                                 onClick = { viewModel.switchProfile(AppProfile.GIRL) },
-                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Check,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(16.dp)
-                                            .alpha(if (uiState.appProfile == AppProfile.GIRL) 1f else 0f)
-                                    )
-                                    Text(AppText.SETTINGS_PROFILE_GIRL)
-                                }
-                            }
+                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                icon = { SegmentedButtonDefaults.Icon(uiState.appProfile == AppProfile.GIRL) },
+                                label = { Text(AppText.SETTINGS_PROFILE_GIRL) }
+                            )
                         }
                     },
                     onClick = {}
@@ -469,7 +296,6 @@ fun SettingsScreen(
                     iconTint = SecondaryLight,
                     onClick = { exportLauncher.launch("quleme_data.json") }
                 )
-                
                 SettingItem(
                     icon = Icons.Rounded.Upload,
                     title = AppText.SETTINGS_RESTORE_DATA,
@@ -477,7 +303,6 @@ fun SettingsScreen(
                     iconTint = MaterialTheme.colorScheme.primary,
                     onClick = { importLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) }
                 )
-                
                 SettingItem(
                     icon = Icons.Rounded.Delete,
                     title = AppText.SETTINGS_CLEAR_ALL,
@@ -497,7 +322,6 @@ fun SettingsScreen(
                     iconTint = CutePink,
                     onClick = { showWebDavDialog = true }
                 )
-
                 SettingItem(
                     icon = Icons.Rounded.Upload,
                     title = AppText.SETTINGS_WEBDAV_TEST,
@@ -509,16 +333,11 @@ fun SettingsScreen(
                                 webDavBusy = true
                                 val ok = viewModel.testWebDavConnection()
                                 webDavBusy = false
-                                Toast.makeText(
-                                    context,
-                                    if (ok) AppText.SETTINGS_WEBDAV_TEST_OK else AppText.SETTINGS_WEBDAV_TEST_FAILED,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                showToast(if (ok) AppText.SETTINGS_WEBDAV_TEST_OK else AppText.SETTINGS_WEBDAV_TEST_FAILED)
                             }
                         }
                     }
                 )
-
                 SettingItem(
                     icon = Icons.Rounded.Upload,
                     title = AppText.SETTINGS_WEBDAV_BACKUP,
@@ -530,16 +349,11 @@ fun SettingsScreen(
                                 webDavBusy = true
                                 val ok = viewModel.backupToWebDav()
                                 webDavBusy = false
-                                Toast.makeText(
-                                    context,
-                                    if (ok) AppText.SETTINGS_WEBDAV_BACKUP_OK else AppText.SETTINGS_WEBDAV_BACKUP_FAILED,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                showToast(if (ok) AppText.SETTINGS_WEBDAV_BACKUP_OK else AppText.SETTINGS_WEBDAV_BACKUP_FAILED)
                             }
                         }
                     }
                 )
-
                 SettingItem(
                     icon = Icons.Rounded.Download,
                     title = AppText.SETTINGS_WEBDAV_RESTORE,
@@ -549,7 +363,7 @@ fun SettingsScreen(
                 )
             }
         }
-        
+
         item {
             Text(
                 text = "quleme v${BuildConfig.VERSION_NAME}",
@@ -559,8 +373,169 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .padding(top = 24.dp)
                     .clickable { uriHandler.openUri("https://github.com/sky22333/luleme") },
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+// ==========================================
+// 提取出的独立 Dialog 组件，保持主函数整洁
+// ==========================================
+
+@Composable
+private fun ClearDataDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(AppText.SETTINGS_CLEAR_ALL_TITLE) },
+        text = { Text(AppText.SETTINGS_CLEAR_ALL_TEXT) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) { Text(AppText.SETTINGS_CLEAR_CONFIRM) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(AppText.SETTINGS_THINK_AGAIN) }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@Composable
+private fun WebDavConfigDialog(
+    uiState: dynamic, // 根据你的实际类型替换 (e.g., SettingsUiState)
+    isBusy: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String, String) -> Unit
+) {
+    // 将状态下沉到这个专门的 Dialog 里
+    var url by remember { mutableStateOf(uiState.webDavUrl) }
+    var username by remember { mutableStateOf(uiState.webDavUsername) }
+    var password by remember { mutableStateOf("") }
+    var directory by remember { mutableStateOf(uiState.webDavDirectory) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(AppText.SETTINGS_WEBDAV_CONFIG_TITLE) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = url as String,
+                    onValueChange = { url = it },
+                    label = { Text(AppText.SETTINGS_WEBDAV_SERVER_URL) },
+                    placeholder = { Text("https://example.com/dav") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = username as String,
+                    onValueChange = { username = it },
+                    label = { Text(AppText.SETTINGS_WEBDAV_USERNAME) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(if (uiState.webDavPasswordSaved) AppText.SETTINGS_WEBDAV_NEW_PASSWORD else AppText.SETTINGS_WEBDAV_PASSWORD) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = AppText.SETTINGS_WEBDAV_HINT,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = directory as String,
+                    onValueChange = { directory = it },
+                    label = { Text(AppText.SETTINGS_WEBDAV_DIRECTORY_OPTIONAL) },
+                    placeholder = { Text("quleme") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSave(url as String, username as String, password, directory as String) },
+                enabled = !isBusy
+            ) {
+                if (isBusy) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(AppText.SAVE)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isBusy) { Text(AppText.CANCEL) }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@Composable
+private fun WebDavRestoreDialog(
+    isBusy: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TITLE) },
+        text = { Text(AppText.SETTINGS_WEBDAV_RESTORE_TEXT) },
+        confirmButton = {
+            Button(onClick = onConfirm, enabled = !isBusy) {
+                if (isBusy) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text(AppText.SETTINGS_WEBDAV_RESTORE_CONFIRM)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isBusy) { Text(AppText.CANCEL) }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(24.dp)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BirthDateDialog(
+    initialDate: LocalDate,
+    onDismiss: () -> Unit,
+    onConfirm: (LocalDate) -> Unit
+) {
+    val initialMillis = remember(initialDate) {
+        initialDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    }
+    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
+                        onConfirm(selectedDate)
+                    }
+                }
+            ) { Text(AppText.CONFIRM) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(AppText.CANCEL) }
+        },
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        DatePicker(state = datePickerState)
     }
 }
