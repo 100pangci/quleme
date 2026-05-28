@@ -46,7 +46,8 @@ object GirlText {
     const val HOME_KEEP_MOOD = "保持好心情~"
     const val HOME_DONT_FORGET_LOVE = "别忘了爱自己哦"
     const val HOME_HEALTH_TIP_TITLE = "💡 健康小贴士"
-    const val HOME_HEALTH_MSG_TODAY_MANY = "今天搓有点多次啦，注意身体哦DJ ✈️"
+    const val HOME_HEALTH_MSG_TODAY_OVERLOAD = "今天搓有点多次啦，注意身体哦DJ ✈️"
+    const val HOME_HEALTH_MSG_TODAY_MULTIPLE = "现在的状态一定绝佳吧~"
     const val HOME_HEALTH_MSG_TODAY_ONCE = "今天已经搓过啦，心情不错吧~ ✨"
     const val HOME_HEALTH_MSG_FREQUENT = "最近搓碟有点频繁呢，注意劳逸结合哦 💙"
     const val HOME_HEALTH_MSG_HEALTHY = "搓碟节奏很有韵律感！继续保持~ ✨"
@@ -60,7 +61,8 @@ object GirlText {
         frequency: Int,
         maxRecommended: Int
     ): String = when {
-        todayCount >= 2 -> HOME_HEALTH_MSG_TODAY_MANY
+        todayCount >= 4 -> HOME_HEALTH_MSG_TODAY_OVERLOAD    // 触及物理极限
+        todayCount >= 2 -> HOME_HEALTH_MSG_TODAY_MULTIPLE    // 2~3次的健康连击区间
         todayCount == 1 -> HOME_HEALTH_MSG_TODAY_ONCE
         frequency > maxRecommended -> HOME_HEALTH_MSG_FREQUENT
         else -> HOME_HEALTH_MSG_HEALTHY
