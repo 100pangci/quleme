@@ -48,6 +48,7 @@ object GirlText {
     const val HOME_HEALTH_TIP_TITLE = "💡 健康小贴士"
     const val HOME_HEALTH_MSG_TODAY_OVERLOAD = "今天搓有点多次啦，注意身体哦DJ ✈️"
     const val HOME_HEALTH_MSG_TODAY_MULTIPLE = "现在的状态一定绝佳吧~"
+    const val HOME_HEALTH_MSG_TODAY_MANY = HOME_HEALTH_MSG_TODAY_MULTIPLE
     const val HOME_HEALTH_MSG_TODAY_ONCE = "今天已经搓过啦，心情不错吧~ ✨"
     const val HOME_HEALTH_MSG_FREQUENT = "最近搓碟有点频繁呢，注意劳逸结合哦 💙"
     const val HOME_HEALTH_MSG_HEALTHY = "搓碟节奏很有韵律感！继续保持~ ✨"
