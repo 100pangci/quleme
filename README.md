@@ -24,8 +24,3 @@
 <img src=".github/demo/2.jpg" alt="demo2" width="200">
 <img src=".github/demo/3.jpg" alt="demo3" width="200">
 </div>
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=sky22333/luleme&type=date&legend=top-left)](https://www.star-history.com/?repos=sky22333%2Fluleme&type=date&legend=top-left)
