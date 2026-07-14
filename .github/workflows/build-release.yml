@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       
@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
       
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '9.4.1'
 
@@ -101,6 +101,5 @@ jobs:
           files: release/quleme.apk
           draft: false
           prerelease: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease == true }}
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
