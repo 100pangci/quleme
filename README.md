@@ -94,7 +94,3 @@ gradlew.bat assembleDebug
 ## License
 
 本项目采用 [LICENSE](./LICENSE) 中声明的许可协议。
-
-## Star 趋势
-
-[![Star 趋势](https://starchart.cc/sky22333/luleme.svg?variant=adaptive)](https://starchart.cc/sky22333/luleme)
